@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Classlytics | Teacher Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 p-8 max-w-5xl mx-auto text-slate-800">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-extrabold text-blue-700">Teacher Panel</h1>
+        <a href="/" class="text-blue-600 hover:underline">← Dashboard</a>
+    </div>
+
+    <div class="mb-6 flex gap-4">
+        <select class="p-3 border rounded-lg bg-white shadow-sm w-64 outline-none focus:ring-2 focus:ring-blue-500">
+            <option>Classroom: CS 101</option>
+            <option>Classroom: Data Structures</option>
+        </select>
+        <button class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">View Data</button>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <h2 class="text-xl font-bold mb-4">Recent Quiz: Quantum Physics</h2>
+        <table class="w-full text-left mt-4">
+            <thead class="bg-slate-50 border-b">
+                <tr>
+                    <th class="p-3">Student Name</th>
+                    <th class="p-3">Status</th>
+                    <th class="p-3">Attention Score</th>
+                    <th class="p-3">Tab Switches</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b"><td class="p-3">John Doe</td><td class="p-3 text-green-600 font-bold">Completed</td><td class="p-3">85/100</td><td class="p-3">1</td></tr>
+                <tr class="border-b"><td class="p-3">Jane Smith</td><td class="p-3 text-green-600 font-bold">Completed</td><td class="p-3">100/100</td><td class="p-3">0</td></tr>
+                <tr><td class="p-3">Mark Wilson</td><td class="p-3 text-red-600 font-bold">Pending</td><td class="p-3">--</td><td class="p-3">--</td></tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

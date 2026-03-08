@@ -1,25 +1,49 @@
 from flask import Flask, render_template, request, jsonify
 import google.generativeai as genai
 import json
+import os
+from dotenv import load_dotenv
 
+
+# --- ENVIRONMENT SETUP ---
+load_dotenv()
 app = Flask(__name__)
 
 # --- AI SETUP ---
-# Put the API key you got from Google AI Studio right here!
-genai.configure(api_key="AIzaSyA-bMfgptWyEMphqkyU9MAr1B-oZ_T0ZOc")
+genai.configure(api_key=os.getenv("API_KEY"))
 
-# --- CORE AI BEHAVIORAL ALGORITHM ---
 def calculate_attention_score(accuracy, time_taken, tab_switches):
     score = accuracy
-    TAB_PENALTY = 15 # Lose 15 points per tab switch
+    TAB_PENALTY = 15
     score -= (tab_switches * TAB_PENALTY)
     return round(max(0, min(100, score)), 2)
 
-# --- ROUTES ---
+# --- PAGE ROUTES ---
 @app.route('/')
-def home():
-    return render_template('index.html')
+def main_page():
+    return render_template('main.html')
 
+@app.route('/create')
+def create_page():
+    return render_template('create.html')
+
+@app.route('/quiz')
+def quiz_page():
+    return render_template('quiz.html')
+
+@app.route('/score')
+def score_page():
+    return render_template('score.html')
+
+@app.route('/leaderboard')
+def leaderboard_page():
+    return render_template('leaderboard.html')
+
+@app.route('/teacher')
+def teacher_page():
+    return render_template('teacher.html')
+
+# --- API ROUTES ---
 @app.route('/api/submit', methods=['POST'])
 def submit_assessment():
     data = request.json
@@ -41,36 +65,50 @@ def submit_assessment():
 def generate_quiz():
     source_text = request.json.get('text', '')
     
-    # Advanced Prompt Engineering
+    # 1. Load the AI configuration from the JSON file
+    try:
+        with open('teacher_config.json', 'r') as config_file:
+            config = json.load(config_file)
+    except FileNotFoundError:
+        print("Error: teacher_config.json not found.")
+        return jsonify({"error": "Configuration file missing"}), 500
+
+    # 2. Build the prompt dynamically
     prompt = f"""
-    Act as a strict, expert university professor. Read the following text:
+    {config['persona']}
+    
+    OBJECTIVE:
+    {config['objective']}
+    
+    PARAMETERS:
+    {chr(10).join(['- ' + param for param in config['parameters']])}
+
+    OUTPUT FORMAT:
+    {config['output_format']}
+    Must match this exact structure: {json.dumps(config['json_schema_example'])}
+    
+    SOURCE TEXT TO ANALYZE:
     "{source_text}"
-
-    Generate exactly 3 difficult, university-level multiple-choice questions based on this text.
-    Do not ask simple factual recall questions. Ask questions that require critical thinking, application, or deep comprehension.
-    The incorrect options (distractors) must be highly plausible to challenge the student.
-
-    Respond ONLY with a valid JSON array matching this exact format, with no markdown or extra text:
-    [
-      {{
-        "question": "Complex question text...",
-        "option_a": "Plausible wrong answer",
-        "option_b": "Another plausible wrong answer",
-        "option_c": "The actual correct answer",
-        "option_d": "A tricky wrong answer",
-        "correct_option": "c"
-      }}
-    ]
     """
     
-    model = genai.GenerativeModel('gemini-2.5-flash')
-    response = model.generate_content(prompt)
-    
-    # Clean up the text so Python can read it as JSON
-    clean_text = response.text.replace('```json', '').replace('```', '').strip()
-    generated_questions = json.loads(clean_text)
-    
-    return jsonify(generated_questions)
+    # 3. Call the AI with error handling and native JSON mode
+    try:
+        # Changed to 2.5-flash for stability
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        
+        # This tells the model to ONLY output raw JSON
+        response = model.generate_content(
+            prompt,
+            generation_config={"response_mime_type": "application/json"}
+        )
+        
+        generated_questions = json.loads(response.text)
+        return jsonify(generated_questions)
+        
+    except Exception as e:
+        # This will print the exact reason for the failure in your Python terminal!
+        print(f"CRITICAL AI ERROR: {str(e)}")
+        return jsonify({"error": "AI generation failed. Check terminal for details."}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

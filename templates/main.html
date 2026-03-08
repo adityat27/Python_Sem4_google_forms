@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Classlytics | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 flex h-screen overflow-hidden text-slate-900">
+    <aside class="w-64 bg-white border-r border-slate-200 p-6 flex flex-col justify-between">
+        <div>
+            <h1 class="text-2xl font-extrabold text-blue-700 tracking-tight mb-8">Classlytics</h1>
+            <nav class="space-y-4">
+                <a href="#" class="block text-slate-600 hover:text-blue-600 font-medium">Dashboard</a>
+                <a href="/leaderboard" class="block text-slate-600 hover:text-blue-600 font-medium">Leaderboard</a>
+                <a href="/teacher" class="block text-slate-600 hover:text-blue-600 font-medium">Teacher Panel</a>
+                <a href="#" class="block text-slate-600 hover:text-blue-600 font-medium">Settings</a>
+            </nav>
+        </div>
+        <button class="w-full bg-slate-100 text-slate-700 py-2 rounded-lg font-semibold">Login / Logout</button>
+    </aside>
+
+    <main class="flex-1 flex flex-col">
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+            <input type="text" placeholder="Search..." class="bg-slate-100 px-4 py-2 rounded-lg w-64 outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center font-bold text-blue-700">PR</div>
+        </header>
+
+        <div class="p-8 flex gap-6">
+            <a href="/create" class="flex-1 bg-blue-600 text-white rounded-2xl p-8 shadow-md hover:bg-blue-700 transition cursor-pointer">
+                <h2 class="text-2xl font-bold mb-2">+ Create New Quiz</h2>
+                <p class="text-blue-100">Use AI to instantly generate a proctored assessment.</p>
+            </a>
+            <div class="flex-1 bg-white rounded-2xl p-8 border border-slate-200 shadow-sm opacity-60">
+                <h2 class="text-xl font-bold mb-2">Recent Quizzes</h2>
+                <p class="text-slate-500">Physics 101 - Midterm (Not functional yet)</p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

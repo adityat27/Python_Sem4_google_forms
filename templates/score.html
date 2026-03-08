@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Classlytics | Score</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-blue-600 h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
+        <h1 class="text-3xl font-extrabold text-slate-800 mb-6">Assessment Complete</h1>
+        
+        <div class="text-6xl font-black text-blue-600 mb-6" id="scoreDisplay">--</div>
+        
+        <div class="bg-slate-50 p-4 rounded-lg flex justify-between text-slate-600 mb-6 border border-slate-200">
+            <div>
+                <p class="text-sm font-bold">Time Taken</p>
+                <p id="timeDisplay" class="text-lg text-slate-900">--s</p>
+            </div>
+            <div>
+                <p class="text-sm font-bold">Tab Switches</p>
+                <p id="tabDisplay" class="text-lg text-red-600 font-bold">--</p>
+            </div>
+        </div>
+
+        <a href="/" class="text-blue-600 font-bold hover:underline">Return to Dashboard</a>
+    </div>
+
+    <script>
+        const data = JSON.parse(localStorage.getItem('final_score'));
+        if(data) {
+            document.getElementById('scoreDisplay').innerText = data.attention_score;
+            document.getElementById('timeDisplay').innerText = data.time_taken + 's';
+            document.getElementById('tabDisplay').innerText = data.switches;
+        }
+    </script>
+</body>
+</html>
