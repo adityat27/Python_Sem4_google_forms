@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classlytics | AI Assessment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen flex flex-col items-center py-8 px-4">
+
+    <div class="w-full max-w-2xl mb-6 p-6 border-2 border-blue-300 rounded-2xl bg-blue-50 shadow-sm">
+        <h3 class="font-extrabold text-blue-800 mb-2 text-xl">✨ AI Teacher Panel</h3>
+        <p class="text-sm text-blue-600 mb-3">Paste a paragraph from a textbook below. The AI will read it and build a university-level quiz instantly.</p>
+        <textarea id="sourceText" class="w-full p-3 border border-blue-200 rounded-lg mb-3 outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Example: Quantum mechanics is a fundamental theory in physics..."></textarea>
+        <button onclick="generateAIQuiz()" id="aiBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow transition-all">
+            Generate Quiz with AI
+        </button>
+        <p id="loadingText" class="hidden text-blue-600 font-bold mt-2 animate-pulse">🤖 AI is acting as a strict professor and writing questions...</p>
+    </div>
+
+    <div class="w-full max-w-2xl bg-white p-8 rounded-t-2xl shadow-sm border-b-4 border-blue-600">
+        <h1 class="text-3xl font-extrabold text-blue-700 tracking-tight">Classlytics</h1>
+        <div class="mt-4 p-4 bg-blue-50 rounded-lg text-sm border-l-4 border-blue-500 text-blue-800">
+            <strong>Privacy-First Proctoring Active:</strong> Do not switch tabs. Focus tracking is running locally.
+        </div>
+    </div>
+
+    <div class="w-full max-w-2xl bg-white p-8 rounded-b-2xl shadow-md border border-blue-200 mt-2">
+        <form id="assessmentForm" class="space-y-6">
+            
+            <div id="quizContainer" class="space-y-6">
+                <p class="text-slate-500 italic text-center">Awaiting AI Generation...</p>
+            </div>
+
+            <button type="button" onclick="submitAssessment()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-colors text-lg">
+                Submit Assessment
+            </button>
+        </form>
+
+        <div id="resultBox" class="hidden mt-6 p-8 rounded-xl border-2 border-blue-200 bg-blue-50 text-center">
+            <h2 class="text-2xl font-bold text-blue-900 mb-4">Assessment Complete</h2>
+            <div class="bg-white p-4 rounded-lg shadow-sm inline-block text-left border border-blue-100">
+                <p class="text-lg mb-2 text-slate-700">Final Attention Score: <span id="scoreText" class="font-extrabold text-blue-700 text-xl"></span></p>
+                <p class="text-slate-600">Time Logged: <span id="timeText" class="font-semibold"></span></p>
+                <p class="text-slate-600">Focus Shifts (Tabs): <span id="tabText" class="font-semibold"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tabSwitches = 0;
+        let startTime = Date.now();
+        let correctAnswers = []; // Store the AI's answer key
+
+        // Track tabs
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) tabSwitches++;
+        });
+
+        // --- AI GENERATION LOGIC ---
+        async function generateAIQuiz() {
+            const text = document.getElementById('sourceText').value;
+            if(!text) return alert("Please paste some text first!");
+
+            document.getElementById('aiBtn').classList.add('hidden');
+            document.getElementById('loadingText').classList.remove('hidden');
+
+            try {
+                // Send text to Python
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const questions = await response.json();
+                
+                // Build the HTML for the new questions with Options A, B, C, D
+                let htmlContent = "";
+                correctAnswers = []; // Reset answer key
+
+                questions.forEach((q, index) => {
+                    correctAnswers.push(q.correct_option); // Save answer key for grading
+                    
+                    htmlContent += `
+                    <div class="p-5 border border-slate-200 rounded-xl bg-slate-50">
+                        <p class="font-semibold text-slate-800 mb-3">${index + 1}. ${q.question}</p>
+                        <select id="q${index}" class="w-full bg-white border border-blue-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="none">-- Select an answer --</option>
+                            <option value="a">A. ${q.option_a}</option>
+                            <option value="b">B. ${q.option_b}</option>
+                            <option value="c">C. ${q.option_c}</option>
+                            <option value="d">D. ${q.option_d}</option>
+                        </select>
+                    </div>`;
+                });
+
+                // Inject the new HTML into the page
+                document.getElementById('quizContainer').innerHTML = htmlContent;
+                
+                // Restart the timer since the quiz just started!
+                startTime = Date.now();
+                tabSwitches = 0;
+            } catch (error) {
+                alert("Error generating quiz. Check your Python terminal for details.");
+                console.error(error);
+            } finally {
+                // Reset UI
+                document.getElementById('aiBtn').classList.remove('hidden');
+                document.getElementById('loadingText').classList.add('hidden');
+            }
+        }
+
+        // --- SUBMISSION LOGIC ---
+        async function submitAssessment() {
+            if(correctAnswers.length === 0) return alert("Generate a quiz first!");
+
+            let endTime = Date.now();
+            let timeTakenSeconds = Math.floor((endTime - startTime) / 1000);
+            
+            // Grade the test dynamically based on the AI's answer key
+            let accuracy = 0;
+            let pointsPerQuestion = 100 / correctAnswers.length;
+            
+            correctAnswers.forEach((correctLetter, index) => {
+                let studentAnswer = document.getElementById(`q${index}`).value;
+                if(studentAnswer === correctLetter) {
+                    accuracy += pointsPerQuestion;
+                }
+            });
+
+            const behavioralData = {
+                switches: tabSwitches,
+                time_taken: timeTakenSeconds,
+                accuracy: accuracy
+            };
+
+            const response = await fetch('/api/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(behavioralData)
+            });
+
+            const result = await response.json();
+
+            document.getElementById('assessmentForm').classList.add('hidden');
+            document.getElementById('resultBox').classList.remove('hidden');
+            document.getElementById('scoreText').innerText = `${result.attention_score} / 100`;
+            document.getElementById('timeText').innerText = `${result.time_taken} seconds`;
+            document.getElementById('tabText').innerText = result.switches;
+        }
+    </script>
+</body>
+</html>
