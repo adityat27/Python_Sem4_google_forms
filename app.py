@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify
-import google.generativeai as genai
 import json
 import os
 from dotenv import load_dotenv
@@ -10,7 +9,13 @@ load_dotenv()
 app = Flask(__name__)
 
 # --- AI SETUP ---
-genai.configure(api_key=os.getenv("API_KEY"))
+import google.genai as genai
+api_key = os.getenv("API_KEY")
+if not api_key:
+    print("ERROR: API_KEY environment variable not set")
+    client = None
+else:
+    client = genai.Client(api_key=api_key)
 
 def calculate_attention_score(accuracy, time_taken, tab_switches):
     score = accuracy
@@ -93,13 +98,16 @@ def generate_quiz():
     
     # 3. Call the AI with error handling and native JSON mode
     try:
-        # Changed to 2.5-flash for stability
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        if client is None:
+            return jsonify({"error": "AI service not configured"}), 500
         
         # This tells the model to ONLY output raw JSON
-        response = model.generate_content(
-            prompt,
-            generation_config={"response_mime_type": "application/json"}
+        response = client.models.generate_content(
+            model='gemini-2.0-flash-exp',
+            contents=prompt,
+            config=genai.GenerateContentConfig(
+                response_mime_type="application/json"
+            )
         )
         
         generated_questions = json.loads(response.text)
@@ -112,3 +120,47 @@ def generate_quiz():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
+
+# Vercel serverless function handler
+def handler(event, context):
+    from werkzeug.wrappers import Request, Response
+    import io
+    import json
+
+    # Create WSGI environ from Vercel event
+    environ = {
+        'REQUEST_METHOD': event.get('httpMethod', 'GET'),
+        'SCRIPT_NAME': '',
+        'PATH_INFO': event.get('path', '/'),
+        'QUERY_STRING': '&'.join([f"{k}={v}" for k, v in event.get('queryStringParameters', {}).items()]),
+        'CONTENT_TYPE': event.get('headers', {}).get('content-type', ''),
+        'CONTENT_LENGTH': str(len(event.get('body', ''))),
+        'SERVER_NAME': 'vercel',
+        'SERVER_PORT': '443',
+        'wsgi.version': (1, 0),
+        'wsgi.url_scheme': 'https',
+        'wsgi.input': io.StringIO(event.get('body', '')),
+        'wsgi.errors': io.StringIO(),
+        'wsgi.multithread': False,
+        'wsgi.multiprocess': False,
+        'wsgi.run_once': False,
+    }
+
+    # Add headers
+    for header, value in event.get('headers', {}).items():
+        environ[f'HTTP_{header.upper().replace("-", "_")}'] = value
+
+    # Response container
+    response_data = {}
+
+    def start_response(status, headers):
+        response_data['statusCode'] = int(status.split()[0])
+        response_data['headers'] = dict(headers)
+
+    # Call the Flask app
+    result = app(environ, start_response)
+
+    # Get the response body
+    response_data['body'] = b''.join(result).decode('utf-8')
+
+    return response_data

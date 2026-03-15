@@ -1,2 +1,4 @@
 # To load environment variables from .env automatically
 python-dotenv
+Flask
+google-genai
