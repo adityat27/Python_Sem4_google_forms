@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <title>Classlytics | Attempt</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="bg-slate-50 p-8 max-w-2xl mx-auto">
     <div class="bg-red-50 text-red-800 p-4 rounded-lg mb-6 font-bold border border-red-200">
@@ -12,52 +12,118 @@
     <div id="quizArea" class="space-y-6"></div>
     <button onclick="submitAssessment()" class="mt-8 bg-blue-600 text-white font-bold py-3 rounded-xl w-full">Submit Final Answers</button>
 
-    <script>
-        let tabSwitches = 0;
-        let startTime = Date.now();
-        const quizData = JSON.parse(localStorage.getItem('active_quiz') || '[]');
+    <div id="setupArea" class="text-center py-8">
+    <h2 class="text-xl font-bold mb-4">Proctoring Required</h2>
+    <button onclick="startProctoring()" id="startBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl">Share Screen & Begin</button>
+</div>
 
-        document.addEventListener("visibilitychange", () => {
-            if (document.hidden) tabSwitches++;
-        });
+<div id="quizContent" class="hidden space-y-6">
+    <div id="quizArea" class="space-y-6"></div>
+    <button onclick="submitAssessment()" class="mt-8 bg-blue-600 text-white font-bold py-3 rounded-xl w-full">Submit Final Answers</button>
+</div>
 
-        // Load quiz
-        let html = "";
+<script>
+    let tabSwitches = 0;
+    let startTime = null;
+    let actionLogs = [];
+    const quizData = JSON.parse(localStorage.getItem('active_quiz') || '[]');
+    
+    // Screen Recording Variables
+    let mediaRecorder;
+    let recordedChunks = [];
+
+    // 1. Initialize Screen Recording & Timer
+    async function startProctoring() {
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) recordedChunks.push(e.data);
+            };
+            
+            mediaRecorder.start();
+            
+            // Sync the timer with the start of the video
+            startTime = Date.now();
+            
+            // Reveal the quiz
+            document.getElementById('setupArea').classList.add('hidden');
+            document.getElementById('quizContent').classList.remove('hidden');
+            
+        } catch (err) {
+            alert("You must share your screen to take the quiz!");
+        }
+    }
+
+    // 2. Track tab switches exactly as before
+    document.addEventListener("visibilitychange", () => {
+        if (!startTime) return; // Don't track if quiz hasn't started
+        let secondsElapsed = (Date.now() - startTime) / 1000;
+        
+        if (document.hidden) {
+            tabSwitches++;
+            actionLogs.push({ event: "Left Tab", time: secondsElapsed });
+        } else {
+            actionLogs.push({ event: "Returned", time: secondsElapsed });
+        }
+    });
+
+    // Load quiz UI
+    let html = "";
+    quizData.forEach((q, i) => {
+        html += `
+        <div class="p-6 bg-white rounded-xl shadow-sm border border-slate-200">
+            <p class="font-bold mb-4">${i + 1}. ${q.question}</p>
+            <select id="ans${i}" class="w-full border p-3 rounded-lg bg-slate-50">
+                <option value="none">-- Select --</option>
+                <option value="a">A. ${q.option_a}</option>
+                <option value="b">B. ${q.option_b}</option>
+                <option value="c">C. ${q.option_c}</option>
+                <option value="d">D. ${q.option_d}</option>
+            </select>
+        </div>`;
+    });
+    document.getElementById('quizArea').innerHTML = html;
+
+    // 3. Submit Assessment (Stop video and send via FormData)
+    async function submitAssessment() {
+        let endTime = Date.now();
+        let timeTaken = Math.floor((endTime - startTime) / 1000);
+        let accuracy = 0;
+        let pts = 100 / quizData.length;
+
         quizData.forEach((q, i) => {
-            html += `
-            <div class="p-6 bg-white rounded-xl shadow-sm border border-slate-200">
-                <p class="font-bold mb-4">${i + 1}. ${q.question}</p>
-                <select id="ans${i}" class="w-full border p-3 rounded-lg bg-slate-50">
-                    <option value="none">-- Select --</option>
-                    <option value="a">A. ${q.option_a}</option>
-                    <option value="b">B. ${q.option_b}</option>
-                    <option value="c">C. ${q.option_c}</option>
-                    <option value="d">D. ${q.option_d}</option>
-                </select>
-            </div>`;
+            if(document.getElementById(`ans${i}`).value === q.correct_option) accuracy += pts;
         });
-        document.getElementById('quizArea').innerHTML = html;
 
-        async function submitAssessment() {
-            let endTime = Date.now();
-            let timeTaken = Math.floor((endTime - startTime) / 1000);
-            let accuracy = 0;
-            let pts = 100 / quizData.length;
-
-            quizData.forEach((q, i) => {
-                if(document.getElementById(`ans${i}`).value === q.correct_option) accuracy += pts;
-            });
+        // Stop the screen recording
+        mediaRecorder.stop();
+        
+        // Wait for the video file to finish compiling, then send it
+        mediaRecorder.onstop = async () => {
+            const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+            
+            // FormData allows us to send files AND json data together
+            const formData = new FormData();
+            formData.append("video", videoBlob, "student_recording.webm");
+            formData.append("data", JSON.stringify({
+                switches: tabSwitches, 
+                time_taken: timeTaken, 
+                accuracy: accuracy,
+                logs: actionLogs 
+            }));
 
             const res = await fetch('/api/submit', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ switches: tabSwitches, time_taken: timeTaken, accuracy })
+                body: formData // Note: We do NOT set 'Content-Type' when using FormData
             });
-            const result = await res.json();
             
+            const result = await res.json();
             localStorage.setItem('final_score', JSON.stringify(result));
             window.location.href = '/score';
-        }
-    </script>
+        };
+    }
+</script>
 </body>
 </html>
