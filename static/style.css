@@ -231,10 +231,6 @@ body {
     color: #dc2626;
 }
 
-.bg-slate-50 {
-    background-color: #f8fafc;
-}
-
 .text-slate-900 {
     color: #0f172a;
 }
@@ -271,8 +267,20 @@ body {
     color: #991b1b;
 }
 
-.text-blue-600 {
-    color: #2563eb;
+.text-slate-800 {
+    color: #1e293b;
+}
+
+.text-yellow-500 {
+    color: #eab308;
+}
+
+.text-slate-400 {
+    color: #94a3b8;
+}
+
+.text-orange-400 {
+    color: #fb923c;
 }
 
 .text-xs {
@@ -393,7 +401,6 @@ body {
     color: #1e293b;
 }
 
-/* Focus styles */
 .focus\:ring-2:focus {
     box-shadow: 0 0 0 2px;
 }
@@ -482,4 +489,9 @@ body {
 
 .hover\:underline:hover {
     text-decoration: underline;
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
 }

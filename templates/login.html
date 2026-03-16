@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Classlytics | Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="bg-slate-50 flex items-center justify-center h-screen text-slate-900">
+    
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-md w-full">
+        <h1 class="text-3xl font-extrabold text-blue-700 text-center mb-2">Classlytics</h1>
+        <p class="text-slate-500 text-center mb-8">Sign in to your portal</p>
+        
+        {% if error %}
+            <div class="bg-red-50 text-red-800 p-3 rounded-lg mb-6 border border-red-200 text-sm font-semibold text-center">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="POST" action="/" class="space-y-4">
+            <div>
+                <label for="role" class="text-sm font-bold text-slate-700">I am a:</label>
+                <select name="role" id="role" required class="w-full border border-slate-300 p-3 rounded-lg mt-1 outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="username" class="text-sm font-bold text-slate-700">Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter username" required class="w-full border border-slate-300 p-3 rounded-lg mt-1 outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div>
+                <label for="password" class="text-sm font-bold text-slate-700">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter password" required class="w-full border border-slate-300 p-3 rounded-lg mt-1 outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl mt-6 hover:bg-blue-700 transition">
+                Enter Classroom
+            </button>
+        </form>
+    </div>
+
+</body>
+</html>

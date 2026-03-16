@@ -22,35 +22,54 @@
         async function generateAIQuiz() {
             const text = document.getElementById('sourceText').value;
             if(!text) return;
+            
+            // Show loading state
             document.getElementById('aiBtn').classList.add('hidden');
             document.getElementById('loadingText').classList.remove('hidden');
 
-            const res = await fetch('/api/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text })
-            });
-            generatedData = await res.json();
-            
-            let html = "";
-            generatedData.forEach((q, i) => {
-                html += `
-                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-                    <label class="text-xs font-bold text-slate-500">QUESTION ${i+1}</label>
-                    <input type="text" id="q${i}" value="${q.question}" class="w-full font-semibold mb-2 p-2 border-b outline-none">
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <input type="text" id="q${i}_a" value="${q.option_a}" class="p-2 border rounded">
-                        <input type="text" id="q${i}_b" value="${q.option_b}" class="p-2 border rounded">
-                        <input type="text" id="q${i}_c" value="${q.option_c}" class="p-2 border rounded">
-                        <input type="text" id="q${i}_d" value="${q.option_d}" class="p-2 border rounded">
-                    </div>
-                    <label class="text-xs font-bold text-slate-500 mt-2 block">CORRECT OPTION (a, b, c, d)</label>
-                    <input type="text" id="q${i}_ans" value="${q.correct_option}" class="p-2 border rounded w-16 text-center font-bold">
-                </div>`;
-            });
-            document.getElementById('editableQuizContainer').innerHTML = html;
-            document.getElementById('loadingText').classList.add('hidden');
-            document.getElementById('publishBtn').classList.remove('hidden');
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                
+                generatedData = await res.json();
+                
+                // NEW: Check if the backend sent an error message
+                if (generatedData.error) {
+                    alert("AI Error: " + generatedData.error);
+                    // Reset the buttons
+                    document.getElementById('aiBtn').classList.remove('hidden');
+                    document.getElementById('loadingText').classList.add('hidden');
+                    return; // Stop running
+                }
+                
+                let html = "";
+                generatedData.forEach((q, i) => {
+                    html += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                        <label class="text-xs font-bold text-slate-500">QUESTION ${i+1}</label>
+                        <input type="text" id="q${i}" value="${q.question}" class="w-full font-semibold mb-2 p-2 border-b outline-none">
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <input type="text" id="q${i}_a" value="${q.option_a}" class="p-2 border rounded">
+                            <input type="text" id="q${i}_b" value="${q.option_b}" class="p-2 border rounded">
+                            <input type="text" id="q${i}_c" value="${q.option_c}" class="p-2 border rounded">
+                            <input type="text" id="q${i}_d" value="${q.option_d}" class="p-2 border rounded">
+                        </div>
+                        <label class="text-xs font-bold text-slate-500 mt-2 block">CORRECT OPTION (a, b, c, d)</label>
+                        <input type="text" id="q${i}_ans" value="${q.correct_option}" class="p-2 border rounded w-16 text-center font-bold">
+                    </div>`;
+                });
+                document.getElementById('editableQuizContainer').innerHTML = html;
+                document.getElementById('loadingText').classList.add('hidden');
+                document.getElementById('publishBtn').classList.remove('hidden');
+                
+            } catch (err) {
+                alert("A network error occurred.");
+                document.getElementById('aiBtn').classList.remove('hidden');
+                document.getElementById('loadingText').classList.add('hidden');
+            }
         }
 
         function publishQuiz() {
