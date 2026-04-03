@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <title>Classlytics | Manual Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#18181b] text-gray-100 font-sans min-h-screen p-8 selection:bg-blue-500/30">
+    <div class="max-w-4xl mx-auto pb-32">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Manual Quiz Builder</h1>
+            <a href="/dashboard" class="text-sm font-medium text-gray-400 hover:text-white transition-colors">← Cancel & Return</a>
+        </div>
+
+        <div class="backdrop-blur-xl bg-blue-900/10 border-t-4 border-blue-500 border-x border-b border-white/10 rounded-2xl p-8 shadow-2xl mb-8">
+            <input type="text" id="quizTitle" placeholder="Untitled Quiz" class="w-full bg-transparent text-4xl font-bold text-white outline-none placeholder-gray-600 focus:border-b-2 focus:border-blue-500 transition-colors pb-2">
+            <input type="text" placeholder="Form description (optional)" class="w-full bg-transparent mt-4 outline-none text-gray-400 focus:text-gray-300">
+        </div>
+
+        <div id="questionsContainer" class="space-y-6">
+            </div>
+
+        <div class="fixed bottom-10 right-10 flex flex-col gap-4">
+            <button onclick="addQuestion()" class="w-16 h-16 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center text-3xl font-bold transition-transform hover:scale-110 tooltip">
+                +
+            </button>
+            <button onclick="saveManualQuiz()" class="px-6 py-4 bg-green-600 hover:bg-green-500 text-white rounded-full shadow-lg shadow-green-500/30 font-bold transition-transform hover:scale-105 flex items-center gap-2">
+                <span>💾 Save Quiz</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let questionCount = 0;
+
+        // Add a blank question block to the screen
+        function addQuestion() {
+            questionCount++;
+            const qIndex = questionCount; // Store current ID
+            
+            const html = `
+            <div id="qBlock_${qIndex}" class="backdrop-blur-md bg-[#27272a]/80 border border-white/5 rounded-2xl p-8 shadow-xl relative group">
+                
+                <button onclick="document.getElementById('qBlock_${qIndex}').remove()" class="absolute top-4 right-4 text-gray-600 hover:text-red-400 hidden group-hover:block transition-colors font-bold">
+                    ✕ Remove
+                </button>
+
+                <input type="text" id="qText_${qIndex}" placeholder="Type your question here..." class="w-full bg-black/20 text-2xl font-medium mb-8 text-white outline-none border-b border-gray-700 focus:border-blue-500 transition-colors p-3 rounded-t-lg">
+                
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center text-xs font-bold text-gray-500">A</div>
+                        <input type="text" id="optA_${qIndex}" placeholder="Option A" class="flex-1 bg-transparent border-b border-gray-700 outline-none text-gray-300 focus:border-blue-400 p-2">
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center text-xs font-bold text-gray-500">B</div>
+                        <input type="text" id="optB_${qIndex}" placeholder="Option B" class="flex-1 bg-transparent border-b border-gray-700 outline-none text-gray-300 focus:border-blue-400 p-2">
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center text-xs font-bold text-gray-500">C</div>
+                        <input type="text" id="optC_${qIndex}" placeholder="Option C" class="flex-1 bg-transparent border-b border-gray-700 outline-none text-gray-300 focus:border-blue-400 p-2">
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center text-xs font-bold text-gray-500">D</div>
+                        <input type="text" id="optD_${qIndex}" placeholder="Option D" class="flex-1 bg-transparent border-b border-gray-700 outline-none text-gray-300 focus:border-blue-400 p-2">
+                    </div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-bold text-green-500 tracking-wider">CORRECT ANSWER:</span>
+                        <select id="ans_${qIndex}" class="bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white font-bold outline-none focus:border-green-500 cursor-pointer">
+                            <option value="a">Option A</option>
+                            <option value="b">Option B</option>
+                            <option value="c">Option C</option>
+                            <option value="d">Option D</option>
+                        </select>
+                    </div>
+                </div>
+            </div>`;
+            
+            document.getElementById('questionsContainer').insertAdjacentHTML('beforeend', html);
+        }
+
+        // Add the first question automatically when the page loads
+        window.onload = addQuestion;
+
+        // Gather all inputs and send to backend
+        async function saveManualQuiz() {
+            const title = document.getElementById('quizTitle').value || "Untitled Quiz";
+            let finalQuestions = [];
+            
+            // Loop through all elements that might be questions (up to our current count)
+            for (let i = 1; i <= questionCount; i++) {
+                // Check if this block still exists (wasn't removed)
+                if (document.getElementById(`qBlock_${i}`)) {
+                    const qText = document.getElementById(`qText_${i}`).value;
+                    
+                    // Don't save empty questions
+                    if(qText.trim() === "") continue; 
+
+                    finalQuestions.push({
+                        question: qText,
+                        option_a: document.getElementById(`optA_${i}`).value || "Option A",
+                        option_b: document.getElementById(`optB_${i}`).value || "Option B",
+                        option_c: document.getElementById(`optC_${i}`).value || "Option C",
+                        option_d: document.getElementById(`optD_${i}`).value || "Option D",
+                        correct_option: document.getElementById(`ans_${i}`).value
+                    });
+                }
+            }
+
+            if (finalQuestions.length === 0) {
+                alert("Please add at least one completed question before saving.");
+                return;
+            }
+
+            // Send to database
+            const res = await fetch('/api/save_quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    title: title, 
+                    is_ai: false, // Flag as manual
+                    questions: finalQuestions 
+                })
+            });
+
+            if(res.ok) {
+                window.location.href = "/dashboard";
+            } else {
+                alert("Error saving quiz. Check the console.");
+            }
+        }
+    </script>
+</body>
+</html>

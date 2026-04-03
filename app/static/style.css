@@ -495,3 +495,26 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* Custom Animated Gradient for Gemini Badge */
+.bg-gemini-gradient {
+    background: linear-gradient(-45deg, #1e3a8a, #7e22ce, #2563eb, #c084fc);
+    background-size: 400% 400%;
+    animation: geminiGradient 8s ease infinite;
+}
+
+@keyframes geminiGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Breathing animation for the Gemini Sparkle */
+@keyframes geminiPulse {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.1); filter: brightness(1.2) drop-shadow(0 0 8px rgba(126, 34, 206, 0.4)); }
+}
+
+.animate-gemini {
+    animation: geminiPulse 4s ease-in-out infinite;
+}

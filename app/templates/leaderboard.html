@@ -2,29 +2,96 @@
 <html lang="en">
 <head>
     <title>Classlytics | Leaderboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
-<body class="bg-slate-50 p-8 max-w-4xl mx-auto text-slate-800">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-extrabold text-blue-700">Class Leaderboard</h1>
-        <a href="/dashboard" class="text-blue-600 hover:underline">← Back</a>
+<body class="bg-[#461a42] text-white font-sans min-h-screen p-8 selection:bg-purple-500/30">
+    <div class="max-w-4xl mx-auto">
+        
+        <div class="flex justify-between items-center mb-16">
+            <h1 class="text-4xl font-black tracking-tight text-white drop-shadow-lg">Top Scholars 🏆</h1>
+            <a href="/dashboard" class="bg-white/10 hover:bg-white/20 text-white px-6 py-2 rounded-full font-bold transition-colors border border-white/10">
+                Exit
+            </a>
+        </div>
+
+        {% if leaderboard|length >= 3 %}
+        <div class="flex items-end justify-center gap-2 md:gap-6 h-72 mb-16 px-4">
+            
+            <div class="w-1/3 max-w-[180px] flex flex-col items-center group">
+                <p class="font-bold text-xl mb-2 text-center truncate w-full px-2 drop-shadow-md">{{ leaderboard[1].student_name }}</p>
+                <div class="w-full h-40 bg-gradient-to-t from-purple-800 to-purple-500 rounded-t-xl flex flex-col items-center justify-start pt-4 shadow-2xl relative border-t-4 border-purple-400 group-hover:-translate-y-2 transition-transform">
+                    <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-gray-800 font-black text-2xl shadow-inner mb-2">2</div>
+                    <p class="font-bold text-purple-100">{{ leaderboard[1].attention_score }} pts</p>
+                </div>
+            </div>
+
+            <div class="w-1/3 max-w-[200px] flex flex-col items-center group z-10">
+                <p class="font-black text-2xl mb-2 text-center text-yellow-300 drop-shadow-md">{{ leaderboard[0].student_name }} 👑</p>
+                <div class="w-full h-56 bg-gradient-to-t from-purple-800 to-purple-400 rounded-t-xl flex flex-col items-center justify-start pt-6 shadow-2xl relative border-t-4 border-yellow-400 group-hover:-translate-y-2 transition-transform">
+                    <div class="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center text-yellow-900 font-black text-4xl shadow-inner mb-2 ring-4 ring-yellow-200">1</div>
+                    <p class="font-black text-white text-lg">{{ leaderboard[0].attention_score }} pts</p>
+                </div>
+            </div>
+
+            <div class="w-1/3 max-w-[180px] flex flex-col items-center group">
+                <p class="font-bold text-xl mb-2 text-center truncate w-full px-2 drop-shadow-md">{{ leaderboard[2].student_name }}</p>
+                <div class="w-full h-32 bg-gradient-to-t from-purple-800 to-purple-600 rounded-t-xl flex flex-col items-center justify-start pt-4 shadow-2xl relative border-t-4 border-purple-500 group-hover:-translate-y-2 transition-transform">
+                    <div class="w-12 h-12 bg-orange-400 rounded-full flex items-center justify-center text-orange-900 font-black text-2xl shadow-inner mb-2">3</div>
+                    <p class="font-bold text-purple-100">{{ leaderboard[2].attention_score }} pts</p>
+                </div>
+            </div>
+            
+        </div>
+        {% endif %}
+
+        <div class="bg-black/20 backdrop-blur-md rounded-3xl p-6 shadow-xl border border-white/5">
+            <div class="space-y-3">
+                {% for sub in leaderboard %}
+                    {% if loop.index > 3 or leaderboard|length < 3 %}
+                    <div class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-4 rounded-2xl transition-colors border border-white/5">
+                        <div class="flex items-center gap-4">
+                            <span class="w-8 h-8 flex items-center justify-center bg-black/30 rounded-full font-bold text-gray-400">
+                                {{ loop.index }}
+                            </span>
+                            <span class="font-bold text-lg">{{ sub.student_name }}</span>
+                        </div>
+                        <span class="font-black text-purple-300">{{ sub.attention_score }} pts</span>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-10 text-purple-300/60 font-medium">
+                        No scores recorded yet! Take a quiz to appear on the leaderboard.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <table class="w-full text-left">
-            <thead class="bg-slate-100 border-b">
-                <tr>
-                    <th class="p-4">Rank</th>
-                    <th class="p-4">Student</th>
-                    <th class="p-4">Avg. Attention Score</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr class="border-b"><td class="p-4 font-bold text-yellow-500">#1</td><td class="p-4">Alice Johnson</td><td class="p-4 font-bold">98.5</td></tr>
-                <tr class="border-b"><td class="p-4 font-bold text-slate-400">#2</td><td class="p-4">Rahul Sharma</td><td class="p-4 font-bold">94.0</td></tr>
-                <tr><td class="p-4 font-bold text-orange-400">#3</td><td class="p-4">You</td><td class="p-4 font-bold text-blue-600">88.2</td></tr>
-            </tbody>
-        </table>
-    </div>
+    <script>
+        window.onload = function() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) {
+              return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+              var timeLeft = animationEnd - Date.now();
+
+              if (timeLeft <= 0) {
+                return clearInterval(interval);
+              }
+
+              var particleCount = 50 * (timeLeft / duration);
+              // since particles fall down, start a bit higher than random
+              confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+              confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+            }, 250);
+        }
+    </script>
 </body>
 </html>

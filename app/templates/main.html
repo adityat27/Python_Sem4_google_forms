@@ -1,37 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <title>Classlytics | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body class="bg-slate-50 flex h-screen overflow-hidden text-slate-900">
-    <aside class="w-64 bg-white border-r border-slate-200 p-6 flex flex-col justify-between">
+<body class="bg-[#18181b] flex h-screen overflow-hidden text-gray-100 font-sans selection:bg-blue-500/30">
+    
+    <aside class="w-72 backdrop-blur-xl bg-[#27272a]/50 border-r border-white/10 p-8 flex flex-col justify-between">
         <div>
-            <h1 class="text-2xl font-extrabold text-blue-700 tracking-tight mb-8">Classlytics</h1>
-            <nav class="space-y-4">
-                <a href="#" class="block text-slate-600 hover:text-blue-600 font-medium">Dashboard</a>
-                <a href="/leaderboard" class="block text-slate-600 hover:text-blue-600 font-medium">Leaderboard</a>
-                <a href="#" class="block text-slate-600 hover:text-blue-600 font-medium">Settings</a>
+            <h1 class="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-10">Classlytics</h1>
+            <nav class="space-y-6">
+                <a href="/dashboard" class="flex items-center gap-3 text-blue-400 font-bold transition-colors">
+                    <span class="text-xl">🏠</span> Dashboard
+                </a>
+                
+                {% if role == 'teacher' %}
+                <a href="/teacher" class="flex items-center gap-3 text-gray-400 hover:text-white font-medium transition-colors">
+                    <span class="text-xl">👨‍🏫</span> Teacher Panel
+                </a>
+                {% endif %}
+                
+                <a href="/leaderboard" class="flex items-center gap-3 text-gray-400 hover:text-white font-medium transition-colors">
+                    <span class="text-xl">🏆</span> Leaderboard
+                </a>
+                <a href="#" onclick="alert('Settings panel coming soon!')" class="flex items-center gap-3 text-gray-400 hover:text-white font-medium transition-colors">
+                    <span class="text-xl">⚙️</span> Settings
+                </a>
             </nav>
         </div>
-        <button class="w-full bg-slate-100 text-slate-700 py-2 rounded-lg font-semibold">Login / Logout</button>
+        
+        <a href="/logout" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 py-3 rounded-xl font-bold text-center transition-colors">
+            Logout
+        </a>
     </aside>
 
-    <main class="flex-1 flex flex-col">
-        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
-            <input type="text" placeholder="Search.." class="bg-slate-100 px-4 py-2 rounded-lg w-64 outline-none focus:ring-2 focus:ring-blue-500">
-            <div class="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center font-bold text-blue-700">PR</div>
+    <main class="flex-1 flex flex-col h-full overflow-y-auto">
+        <header class="h-20 backdrop-blur-md bg-[#18181b]/80 border-b border-white/10 flex items-center justify-between px-10 sticky top-0 z-10">
+            <input type="text" placeholder="Search quizzes..." class="bg-black/30 border border-white/5 px-6 py-2.5 rounded-full w-80 outline-none focus:border-blue-500/50 transition-colors text-sm text-gray-300">
+            
+            <div class="flex items-center gap-4">
+                <div class="text-right mr-2 hidden md:block">
+                    <p class="text-sm font-bold text-white">{{ username }}</p>
+                    <p class="text-xs text-blue-400 uppercase tracking-widest">{{ role }}</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-full flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20 border border-white/10 uppercase">
+                    {{ username[:2] if username else 'U' }}
+                </div>
+            </div>
         </header>
 
-        <div class="p-8 flex gap-6">
-            <a href="/create" class="flex-1 bg-pink-600 text-white rounded-2xl p-8 shadow-md hover:bg-blue-700 transition cursor-pointer">
-                <h2 class="text-2xl font-bold mb-2">+ Create New Quiz</h2>
-                <p class="text-blue-100">Use AI to instantly generate a proctored assessment.</p>
-            </a>
-            <div class="flex-1 bg-white rounded-2xl p-8 border border-slate-200 shadow-sm opacity-60">
-                <h2 class="text-xl font-bold mb-2">Recent Quizzes</h2>
-                <p class="text-slate-500">Physics 101 - Midterm (Not functional yet)</p>
+        <div class="p-10 flex flex-col xl:flex-row gap-8 relative pb-24 min-h-[calc(100%-80px)]">
+            
+            {% if role == 'teacher' %}
+            <div class="flex-1 space-y-6">
+                <h2 class="text-xl font-bold text-gray-200 mb-4">Create Assessment</h2>
+                
+                <a href="/create" class="block bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer border border-white/10 group">
+                    <h2 class="text-3xl font-bold mb-3 text-white group-hover:scale-105 transition-transform origin-left">✨ AI Assessment Generator</h2>
+                    <p class="text-indigo-200">Analyze textbook or PDF text to instantly generate a comprehensive proctored assessment.</p>
+                </a>
+
+                <a href="/manual_create" class="block bg-[#27272a]/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl hover:bg-[#27272a] hover:-translate-y-1 transition-all cursor-pointer border border-white/5 group">
+                    <h2 class="text-2xl font-bold mb-3 text-white group-hover:text-blue-400 transition-colors">📝 Manual Quiz Builder</h2>
+                    <p class="text-gray-400">Build a classic quiz from scratch, question by question, exactly how you want it.</p>
+                </a>
             </div>
+            {% endif %}
+
+            <div class="flex-1 bg-[#27272a]/50 backdrop-blur-xl rounded-3xl p-8 border border-white/5 shadow-xl">
+                <h2 class="text-xl font-bold mb-6 text-gray-200">Recent Quizzes</h2>
+                
+                <div class="space-y-4">
+                    {% for quiz in quizzes %}
+                    <div class="bg-black/20 p-5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-white text-lg">{{ quiz.title }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">{% if quiz.is_ai_generated %}🤖 AI Generated{% else %}📝 Manual Form{% endif %}</p>
+                        </div>
+                        {% if role == 'student' %}
+                        <a href="/quiz" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg font-bold text-sm transition-colors">Attempt</a>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-10 text-gray-500 font-medium">
+                        No quizzes have been created yet.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="absolute bottom-8 right-10 flex items-center gap-3 bg-black/40 border border-white/5 pl-5 pr-4 py-2.5 rounded-full shadow-2xl backdrop-blur-md group hover:border-blue-500/30 transition-all duration-500">
+                <span class="text-[10px] uppercase tracking-[0.15em] text-gray-500 font-bold">Powered by</span>
+                
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 animate-gemini" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C12 7.52285 7.52285 12 2 12C7.52285 12 12 16.4772 12 22C12 16.4772 16.4772 12 22 12C16.4772 12 12 7.52285 12 2Z" fill="url(#gemini-logo-grad)"/>
+                        <defs>
+                            <linearGradient id="gemini-logo-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#4E90FF"/>
+                                <stop offset="1" stop-color="#C259FF"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    
+                    <span class="text-base font-bold text-gray-200 group-hover:text-white transition-colors tracking-tight">Gemini</span>
+                </div>
+            </div>
+
         </div>
     </main>
 </body>
