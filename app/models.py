@@ -44,3 +44,4 @@ class Submission(db.Model):
     question_times = db.Column(db.JSON, nullable=True)
     auto_submitted = db.Column(db.Boolean, default=False)
     question_results = db.Column(db.JSON, nullable=True)
+    tab_timestamps = db.Column(db.JSON, nullable=True)

@@ -94,11 +94,29 @@
                                     <span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded font-bold border border-green-500/30 shadow-lg block w-max">✅ Finished in time</span>
                                 {% endif %}
                             </td>
-                            <td class="p-4 font-bold {% if sub.tab_switches > 0 %} text-red-400 {% else %} text-gray-400 {% endif %}">
-                                {{ sub.tab_switches }}
+                            <td class="p-4">
+                                <div class="text-gray-300 font-medium mb-2">Total Switches: {{ sub.tab_switches }}</div>
+                                
+                                {% if sub.tab_timestamps %}
+                                <div class="flex flex-col gap-2 mt-3 max-w-[200px]">
+                                    {% for log in sub.tab_timestamps %}
+                                    <div class="flex flex-col gap-1 bg-black/20 p-2 rounded-lg border border-white/5">
+                                        
+                                        <span class="text-[10px] text-gray-500 font-bold tracking-wider uppercase">
+                                            🕒 {{ log.clock_time }}
+                                        </span>
+                                        
+                                        <button onclick="playIncident({{ sub.id }}, {{ log.video_time }})" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs px-3 py-1.5 rounded border border-red-500/30 transition-colors shadow-lg flex items-center justify-center gap-2 font-bold cursor-pointer w-full">
+                                            ▶️ At {{ log.display_time }}
+                                        </button>
+                                        
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
                             </td>
                             <td class="p-4">
-                                <video class="h-20 w-36 rounded-lg border border-white/10 bg-black" controls preload="none">
+                                <video id="video-{{ sub.id }}" class="h-20 w-36 rounded-lg border border-white/10 bg-black transition-all duration-300" controls preload="none">
                                     <source src="/static/videos/{{ sub.video_filename }}" type="video/webm">
                                 </video>
                             </td>
@@ -165,6 +183,28 @@
                 document.getElementById('tab-' + tabId).classList.replace('hidden', 'block');
                 document.getElementById('btn-' + tabId).classList.remove(...inactiveClass);
                 document.getElementById('btn-' + tabId).classList.add(...activeClass);
+            }
+        </script>
+        <script>
+            // --- SMART VIDEO CLIP PLAYER ---
+            function playIncident(subId, totalSeconds) {
+                let video = document.getElementById('video-' + subId);
+                if (!video) return;
+
+                // Jump the video to 5 seconds BEFORE the tab switch happened
+                video.currentTime = Math.max(0, totalSeconds - 5);
+                video.play();
+                
+                // Highlight the video visually with a red glow
+                video.classList.add('ring-4', 'ring-red-500', 'scale-110');
+
+                // Automatically pause it after 10 seconds
+                if (video.clipTimeout) clearTimeout(video.clipTimeout);
+                
+                video.clipTimeout = setTimeout(() => {
+                    video.pause();
+                    video.classList.remove('ring-4', 'ring-red-500', 'scale-110'); 
+                }, 10000); 
             }
         </script>
 </body>

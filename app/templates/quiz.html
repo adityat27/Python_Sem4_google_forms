@@ -42,7 +42,7 @@
         let questionTimes = {};
         let timeLimitSeconds = {{ time_limit | default(5) }} * 60;
         let timerInterval = null;
-        let actionLogs = [];
+        let tabSwitchLogs = [];
         const quizData = JSON.parse(document.getElementById('quiz-data').textContent);
         
         let mediaRecorder;
@@ -189,7 +189,8 @@
                     video_filename: uniqueVideoName,
                     question_times: questionTimes,
                     auto_submitted: isAutoSubmit,
-                    question_results: questionResults
+                    question_results: questionResults,
+                    switch_logs: tabSwitchLogs
                 })
             });
             const result = await res.json();

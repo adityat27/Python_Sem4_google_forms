@@ -140,7 +140,8 @@ def submit_assessment():
         video_filename=data.get('video_filename') + '.webm',
         question_times=data.get('question_times', {}),
         auto_submitted=data.get('auto_submitted', False),
-        question_results=data.get('question_results', {})
+        question_results=data.get('question_results', {}),
+        tab_timestamps=data.get('switch_logs', [])
     )
     db.session.add(new_submission)
     db.session.commit()
