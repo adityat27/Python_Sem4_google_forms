@@ -22,7 +22,10 @@ def create_app():
             db.session.add(teacher)
             
         if not User.query.filter_by(username='student1').first():
-            student = User(username='student1', role='student')
+            student = User(username='student1', role='student',branch='BTech AIML',
+                year='2nd Year (SE)',
+                division='A Div',
+                batch='A-1')
             student.set_password('pass')
             db.session.add(student)
             

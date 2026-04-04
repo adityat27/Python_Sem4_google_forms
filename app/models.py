@@ -8,6 +8,10 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False)
+    branch = db.Column(db.String(100), nullable=True)
+    year = db.Column(db.String(50), nullable=True)
+    division = db.Column(db.String(20), nullable=True)
+    batch = db.Column(db.String(20), nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -19,6 +23,8 @@ class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     is_ai_generated = db.Column(db.Boolean, default=False)
+    questions = db.relationship('Question', backref='quiz', lazy=True)
+    time_limit = db.Column(db.Integer, default=5) # 5 minutes default
     questions = db.relationship('Question', backref='quiz', lazy=True)
 
 class Question(db.Model):
@@ -35,3 +41,6 @@ class Submission(db.Model):
     time_taken = db.Column(db.Integer, nullable=False)
     tab_switches = db.Column(db.Integer, nullable=False)
     video_filename = db.Column(db.String(255), nullable=True)
+    question_times = db.Column(db.JSON, nullable=True)
+    auto_submitted = db.Column(db.Boolean, default=False)
+    question_results = db.Column(db.JSON, nullable=True)

@@ -518,3 +518,36 @@ body {
 .animate-gemini {
     animation: geminiPulse 4s ease-in-out infinite;
 }
+
+/* =========================================
+   MASTER THEME OVERRIDES
+   ========================================= */
+
+/* LIGHT THEME */
+body.light-theme {
+    background-color: #f8fafc !important;
+}
+body.light-theme .bg-\[\#18181b\] { background-color: #f8fafc !important; }
+body.light-theme .bg-\[\#18181b\]\/80 { background-color: rgba(248, 250, 252, 0.8) !important; }
+body.light-theme .bg-\[\#27272a\]\/50, body.light-theme .bg-\[\#27272a\]\/80, body.light-theme .bg-\[\#27272a\] { 
+    background-color: rgba(255, 255, 255, 0.9) !important; 
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
+}
+body.light-theme .bg-black\/20, body.light-theme .bg-black\/30, body.light-theme .bg-black\/40 { 
+    background-color: rgba(241, 245, 249, 0.8) !important; 
+}
+body.light-theme .text-white, body.light-theme .text-gray-100, body.light-theme .text-gray-200 { color: #0f172a !important; }
+body.light-theme .text-gray-300, body.light-theme .text-gray-400 { color: #475569 !important; }
+body.light-theme .border-white\/5, body.light-theme .border-white\/10 { border-color: rgba(0, 0, 0, 0.1) !important; }
+
+/* GLASSMORPHISM THEME */
+body.glass-theme {
+    background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop') no-repeat center center fixed !important;
+    background-size: cover !important;
+}
+body.glass-theme .bg-\[\#18181b\] { background-color: transparent !important; }
+body.glass-theme .bg-\[\#18181b\]\/80 { background-color: rgba(0, 0, 0, 0.2) !important; }
+body.glass-theme .bg-\[\#27272a\]\/50, body.glass-theme .bg-\[\#27272a\]\/80 { 
+    background-color: rgba(255, 255, 255, 0.1) !important; 
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}

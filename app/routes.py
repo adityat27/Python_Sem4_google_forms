@@ -41,6 +41,14 @@ def main_page():
                            role=session.get('role'), 
                            username=session.get('username'))
 
+@bp.route('/settings')
+def settings_page(): 
+    if 'user_id' not in session: return redirect(url_for('main.login_page'))
+    
+    return render_template('settings.html', 
+                           role=session.get('role'), 
+                           username=session.get('username'))
+
 @bp.route('/create')
 def create_page(): 
     return render_template('create.html')
@@ -65,13 +73,37 @@ def quiz_page():
     latest_quiz = Quiz.query.order_by(Quiz.id.desc()).first()
     if not latest_quiz: return "<h2 style='color:white; font-family:sans-serif;'>No quizzes found!</h2>"
     questions_list = [{'id': q.id, 'question': q.text, 'option_a': q.options_data['a'], 'option_b': q.options_data['b'], 'option_c': q.options_data['c'], 'option_d': q.options_data['d'], 'correct_option': q.options_data['correct']} for q in latest_quiz.questions]
-    return render_template('quiz.html', quiz_title=latest_quiz.title, quiz_data=json.dumps(questions_list))
+    return render_template('quiz.html', 
+                           quiz_title=latest_quiz.title, 
+                           quiz_data=json.dumps(questions_list),
+                           time_limit=latest_quiz.time_limit)
 
 @bp.route('/teacher')
 def teacher_page(): 
-    # Grab all student submissions from the database
     submissions = Submission.query.order_by(Submission.id.desc()).all()
-    return render_template('teacher.html', submissions=submissions)
+    students = User.query.filter_by(role='student').all()
+    
+    # --- NEW: CALCULATE CLASS ANALYTICS ---
+    analytics = {}
+    for sub in submissions:
+        if sub.question_results:
+            for q, is_correct in sub.question_results.items():
+                if q not in analytics:
+                    analytics[q] = {'correct': 0, 'total': 0}
+                analytics[q]['total'] += 1
+                if is_correct:
+                    analytics[q]['correct'] += 1
+    
+    # Find questions where the success rate is under 50%
+    alerts = []
+    for q, data in analytics.items():
+        if data['total'] > 0:
+            success_rate = (data['correct'] / data['total']) * 100
+            if success_rate < 50:
+                alerts.append({'question': q, 'success_rate': round(success_rate, 1)})
+    
+    # Pass 'alerts' to the template
+    return render_template('teacher.html', submissions=submissions, students=students, alerts=alerts)
 
 @bp.route('/logout')
 def logout():
@@ -105,7 +137,10 @@ def submit_assessment():
         attention_score=attention_score,
         time_taken=data.get('time_taken', 1),
         tab_switches=data.get('switches', 0),
-        video_filename=data.get('video_filename') + '.webm'
+        video_filename=data.get('video_filename') + '.webm',
+        question_times=data.get('question_times', {}),
+        auto_submitted=data.get('auto_submitted', False),
+        question_results=data.get('question_results', {})
     )
     db.session.add(new_submission)
     db.session.commit()
