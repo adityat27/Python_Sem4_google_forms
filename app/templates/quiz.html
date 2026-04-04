@@ -149,19 +149,16 @@
             }
         }
 
-        async function submitAssessment(isAutoSubmit = false) {
+       async function submitAssessment(isAutoSubmit = false) {
             clearInterval(timerInterval); // Stop timer if they submit early
             
             document.querySelector('button[onclick="submitAssessment()"]').innerText = "Finalizing Score...";
 
             let timeTaken = Math.floor((Date.now() - startTime) / 1000);
-            let accuracy = 0;
-            let pts = 100 / quizData.length;
-
-            let accuracy = 0;
-            let pts = 100 / quizData.length;
             
-            // NEW: Create an object to track right/wrong for each question
+            // Cleaned up the duplicates!
+            let accuracy = 0;
+            let pts = 100 / quizData.length;
             let questionResults = {}; 
 
             quizData.forEach((q, i) => {
@@ -173,7 +170,7 @@
                 // Save true/false for this specific question
                 questionResults[`Q${i+1}`] = isCorrect; 
             });
-            };
+            // Removed the extra stray }; that was here
 
             // Stop recording
             mediaRecorder.stop();
@@ -193,6 +190,7 @@
                     switch_logs: tabSwitchLogs
                 })
             });
+            
             const result = await res.json();
             localStorage.setItem('final_score', JSON.stringify(result));
             window.location.href = '/score';
