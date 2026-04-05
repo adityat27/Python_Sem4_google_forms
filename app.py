@@ -1,3 +1,4 @@
+# -- Version 0.2 --
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 import json
 import os
