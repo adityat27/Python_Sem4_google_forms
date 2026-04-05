@@ -23,7 +23,6 @@ class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     is_ai_generated = db.Column(db.Boolean, default=False)
-    questions = db.relationship('Question', backref='quiz', lazy=True)
     time_limit = db.Column(db.Integer, default=5) # 5 minutes default
     questions = db.relationship('Question', backref='quiz', lazy=True)
 
@@ -33,7 +32,6 @@ class Question(db.Model):
     text = db.Column(db.Text, nullable=False)
     options_data = db.Column(db.JSON, nullable=False)
 
-# NEW: This saves the student's final score for the teacher to see!
 class Submission(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_name = db.Column(db.String(80), nullable=False)

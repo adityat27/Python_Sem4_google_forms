@@ -1,4 +1,14 @@
-# To load environment variables from .env automatically
-python-dotenv
+# Web Framework
 Flask
+
+# Database
+Flask-SQLAlchemy
+
+# Security/Hashing
+Werkzeug
+
+# Environment Variables
+python-dotenv
+
+# AI Integration
 google-genai

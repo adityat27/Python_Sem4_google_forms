@@ -33,7 +33,6 @@ def login_page():
 def main_page(): 
     if 'user_id' not in session: return redirect(url_for('main.login_page'))
     
-    # Fetch the 5 most recent quizzes for the dashboard
     recent_quizzes = Quiz.query.order_by(Quiz.id.desc()).limit(5).all()
     
     return render_template('main.html', 
@@ -51,6 +50,7 @@ def settings_page():
 
 @bp.route('/create')
 def create_page(): 
+    if session.get('role') != 'teacher': return redirect(url_for('main.main_page'))
     return render_template('create.html')
 
 @bp.route('/manual_create')
@@ -60,16 +60,19 @@ def manual_create_page():
 
 @bp.route('/score')
 def score_page(): 
+    if 'user_id' not in session: return redirect(url_for('main.login_page'))
     return render_template('score.html')
 
 @bp.route('/leaderboard')
 def leaderboard_page(): 
-    # Fetch the top 10 highest attention scores from the database
+    if 'user_id' not in session: return redirect(url_for('main.login_page'))
     top_scores = Submission.query.order_by(Submission.attention_score.desc()).limit(10).all()
     return render_template('leaderboard.html', leaderboard=top_scores)
 
 @bp.route('/quiz')
 def quiz_page(): 
+    if 'user_id' not in session: return redirect(url_for('main.login_page'))
+    
     latest_quiz = Quiz.query.order_by(Quiz.id.desc()).first()
     if not latest_quiz: return "<h2 style='color:white; font-family:sans-serif;'>No quizzes found!</h2>"
     questions_list = [{'id': q.id, 'question': q.text, 'option_a': q.options_data['a'], 'option_b': q.options_data['b'], 'option_c': q.options_data['c'], 'option_d': q.options_data['d'], 'correct_option': q.options_data['correct']} for q in latest_quiz.questions]
@@ -80,13 +83,14 @@ def quiz_page():
 
 @bp.route('/teacher')
 def teacher_page(): 
+    if session.get('role') != 'teacher': return redirect(url_for('main.main_page'))
+    
     submissions = Submission.query.order_by(Submission.id.desc()).all()
     students = User.query.filter_by(role='student').all()
     
-    # --- NEW: CALCULATE CLASS ANALYTICS ---
     analytics = {}
     for sub in submissions:
-        if sub.question_results:
+        if sub.question_results and isinstance(sub.question_results, dict):
             for q, is_correct in sub.question_results.items():
                 if q not in analytics:
                     analytics[q] = {'correct': 0, 'total': 0}
@@ -94,7 +98,6 @@ def teacher_page():
                 if is_correct:
                     analytics[q]['correct'] += 1
     
-    # Find questions where the success rate is under 50%
     alerts = []
     for q, data in analytics.items():
         if data['total'] > 0:
@@ -102,7 +105,6 @@ def teacher_page():
             if success_rate < 50:
                 alerts.append({'question': q, 'success_rate': round(success_rate, 1)})
     
-    # Pass 'alerts' to the template
     return render_template('teacher.html', submissions=submissions, students=students, alerts=alerts)
 
 @bp.route('/logout')
@@ -128,7 +130,6 @@ def submit_assessment():
     data = request.json
     attention_score = calculate_attention_score(data.get('accuracy', 0), data.get('time_taken', 1), data.get('switches', 0))
     
-    # Save the score to the database
     student = User.query.get(session.get('user_id'))
     student_name = student.username if student else "Student"
     
@@ -137,7 +138,7 @@ def submit_assessment():
         attention_score=attention_score,
         time_taken=data.get('time_taken', 1),
         tab_switches=data.get('switches', 0),
-        video_filename=data.get('video_filename') + '.webm',
+        video_filename=str(data.get('video_filename', 'no_video')) + '.webm',
         question_times=data.get('question_times', {}),
         auto_submitted=data.get('auto_submitted', False),
         question_results=data.get('question_results', {}),
@@ -169,9 +170,17 @@ def generate_quiz():
     try:
         mock_questions = [{"question": "Primary Python memory mechanism?", "option_a": "Manual allocation", "option_b": "Reference counting", "option_c": "Pointer arithmetic", "option_d": "Stack clearing", "correct_option": "b"}, {"question": "Why is reference counting alone insufficient?", "option_a": "Too slow", "option_b": "Cannot resolve cycles", "option_c": "Uses too much memory", "option_d": "Requires manual intervention", "correct_option": "b"}]
         if client is None: return jsonify(mock_questions)
-        with open('teacher_config.json', 'r') as f: config = json.load(f)
+        
+        base_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        config_path = os.path.join(base_dir, 'teacher_config.json')
+        
+        with open(config_path, 'r') as f: 
+            config = json.load(f)
+            
         prompt = f"{config['persona']} OBJECTIVE: {config['objective']} FORMAT: {config['output_format']} Must match this exact structure: {json.dumps(config['json_schema_example'])} SOURCE TEXT: {source_text}"
         response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
         raw_text = response.text.strip().replace('```json', '').replace('```', '')
         return jsonify(json.loads(raw_text))
-    except: return jsonify(mock_questions)
+    except Exception as e: 
+        print(f"AI Generation Error: {e}")
+        return jsonify(mock_questions)
