@@ -5,14 +5,12 @@ import os
 def create_app():
     app = Flask(__name__)
     
-    # Security key and database location
     app.config['SECRET_KEY'] = 'super-secret-key-change-this'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/database.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
 
-    # This creates the database file and adds your default users
     with app.app_context():
         db.create_all() 
         
@@ -31,7 +29,6 @@ def create_app():
             
         db.session.commit()
 
-    # Link the routes (pages) to this app
     from . import routes
     app.register_blueprint(routes.bp)
 
