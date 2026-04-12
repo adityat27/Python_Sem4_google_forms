@@ -4,7 +4,10 @@
     <title>Classlytics | Welcome</title>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
         * {
@@ -13,41 +16,117 @@
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
         }
+        
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            /* You can swap this URL with any cool background image you find online! */
-            background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop') no-repeat;
-            background-size: cover;
-            background-position: center;
+            overflow: hidden;
+            /* Aesthetic Bright Moving Gradient Background */
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientMove 12s ease infinite;
         }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- BACKGROUND ANIMATION TEXT --- */
+        .background-animation {
+            position: absolute;
+            top: 15%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none; /* Allows clicking through to the form */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .cursive-svg {
+            width: 80vw;
+            max-width: 800px;
+        }
+
+        .cursive-text {
+            font-family: 'Dancing Script', cursive;
+            font-size: 100px;
+            fill: transparent;
+            stroke: rgba(255, 255, 255, 0.9);
+            stroke-width: 2px;
+            /* The "writing" trick */
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawText 4s ease-in-out forwards, glowText 3s ease-in-out infinite alternate 4s;
+        }
+
+        .sub-text {
+            font-size: 18px;
+            fill: rgba(255, 255, 255, 0);
+            font-weight: 500;
+            letter-spacing: 2px;
+            animation: fadeIn 2s ease forwards 3s;
+        }
+
+        @keyframes drawText {
+            100% { stroke-dashoffset: 0; fill: rgba(255, 255, 255, 1); }
+        }
+
+        @keyframes glowText {
+            0% { filter: drop-shadow(0 0 5px rgba(255,255,255,0.5)); }
+            100% { filter: drop-shadow(0 0 20px rgba(255,255,255,0.9)); }
+        }
+
+        @keyframes fadeIn {
+            to { fill: rgba(255, 255, 255, 0.8); }
+        }
+
+        /* --- LOGIN FORM UI (Glassmorphism) --- */
         section {
             position: relative;
+            z-index: 10; /* Keeps form above the background animation */
             max-width: 400px;
             width: 100%;
-            background-color: transparent;
-            border: 2px solid rgba(255, 255, 255, 0.5);
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             border-radius: 20px;
-            backdrop-filter: blur(25px); /* The Glassmorphism Effect */
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 2rem 3rem;
-            box-shadow: 0 15px 25px rgba(0,0,0,0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            /* Slide up animation on load */
+            transform: translateY(50px);
+            opacity: 0;
+            animation: slideUpForm 1s ease forwards 1s;
         }
+
+        @keyframes slideUpForm {
+            to { transform: translateY(0); opacity: 1; }
+        }
+
         h1 {
             font-size: 2rem;
             color: #fff;
             text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
         .inputbox {
             position: relative;
             margin: 30px 0;
             width: 100%;
-            border-bottom: 2px solid #fff;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.7);
         }
+
         .inputbox label {
             position: absolute;
             top: 50%;
@@ -58,11 +137,14 @@
             pointer-events: none;
             transition: all 0.5s ease-in-out;
         }
-        /* Floating label animation */
+
         input:focus ~ label, input:valid ~ label, 
         select:focus ~ label, select:valid ~ label {
             top: -5px;
+            font-size: 0.85rem;
+            color: #fff;
         }
+
         .inputbox input, .inputbox select {
             width: 100%;
             height: 60px;
@@ -73,10 +155,11 @@
             padding: 0 35px 0 5px;
             color: #fff;
         }
-        /* Keeps the dropdown text readable on Windows */
+
         .inputbox select option {
             color: #000;
         }
+
         .inputbox ion-icon {
             position: absolute;
             right: 8px;
@@ -84,6 +167,7 @@
             font-size: 1.2rem;
             top: 20px;
         }
+
         .forget {
             margin: -15px 0 15px;
             font-size: 0.85rem;
@@ -91,51 +175,63 @@
             display: flex;
             justify-content: space-between;
         }
+
         .forget label {
             display: flex;
             align-items: center;
         }
+
         .forget label input {
             margin-right: 3px;
         }
+
         .forget a {
             color: #fff;
             text-decoration: none;
             font-weight: 600;
         }
+
         .forget a:hover {
             text-decoration: underline;
         }
+
         button {
             width: 100%;
             height: 40px;
             border-radius: 40px;
-            background-color: rgba(255, 255, 255, 1);
+            background-color: #fff;
+            color: #333;
             border: none;
             outline: none;
             cursor: pointer;
             font-size: 1rem;
             font-weight: 600;
             transition: all 0.4s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
+
         button:hover {
-            background-color: rgba(255, 255, 255, 0.5);
-            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
         }
+
         .register {
             font-size: 0.9rem;
             color: #fff;
             text-align: center;
             margin: 25px 0 10px;
         }
+
         .register p a {
             text-decoration: none;
             color: #fff;
             font-weight: 600;
         }
+
         .register p a:hover {
             text-decoration: underline;
         }
+
         .error-msg {
             background: rgba(255, 50, 50, 0.5);
             color: white;
@@ -149,6 +245,14 @@
     </style>
 </head>
 <body>
+
+    <div class="background-animation">
+        <svg viewBox="0 0 800 200" class="cursive-svg">
+            <text x="50%" y="40%" dominant-baseline="middle" text-anchor="middle" class="cursive-text">Classlytics</text>
+            <text x="50%" y="80%" dominant-baseline="middle" text-anchor="middle" class="sub-text">The ultimate AI-powered proctoring solution.</text>
+        </svg>
+    </div>
+
     <section>
         <form method="POST" action="/" style="width: 100%;">
             <h1>Login</h1>

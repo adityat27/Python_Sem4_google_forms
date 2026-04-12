@@ -6,7 +6,12 @@ def create_app():
     app = Flask(__name__)
     
     app.config['SECRET_KEY'] = 'super-secret-key-change-this'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/database.db'
+
+    if os.environ.get('VERCEL') == '1':
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/database.db'
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+        
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
