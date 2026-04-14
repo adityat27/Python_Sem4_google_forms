@@ -19,6 +19,7 @@
         
         body {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
@@ -66,13 +67,17 @@
             animation: drawText 4s ease-in-out forwards, glowText 3s ease-in-out infinite alternate 4s;
         }
 
-        .sub-text {
-            font-size: 18px;
-            fill: rgba(255, 255, 255, 0);
-            font-weight: 500;
-            letter-spacing: 2px;
-            animation: fadeIn 2s ease forwards 3s;
-        }
+        .tagline {
+    margin-top: 30px;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.9); 
+    font-weight: 500;
+    letter-spacing: 2px;
+    z-index: 10;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+    opacity: 0; 
+    animation: fadeInText 2s ease forwards 3s;
+}
 
         @keyframes drawText {
             100% { stroke-dashoffset: 0; fill: rgba(255, 255, 255, 1); }
@@ -83,11 +88,11 @@
             100% { filter: drop-shadow(0 0 20px rgba(255,255,255,0.9)); }
         }
 
-        @keyframes fadeIn {
-            to { fill: rgba(255, 255, 255, 0.8); }
-        }
+       @keyframes fadeInText {
+    to { opacity: 1; } /
+}
 
-        /* --- LOGIN FORM UI (Glassmorphism) --- */
+        /* --- LOGIN FORM UI --- */
         section {
             position: relative;
             z-index: 10; /* Keeps form above the background animation */
@@ -249,7 +254,6 @@
     <div class="background-animation">
         <svg viewBox="0 0 800 200" class="cursive-svg">
             <text x="50%" y="40%" dominant-baseline="middle" text-anchor="middle" class="cursive-text">Classlytics</text>
-            <text x="50%" y="80%" dominant-baseline="middle" text-anchor="middle" class="sub-text">The ultimate AI-powered proctoring solution.</text>
         </svg>
     </div>
 
@@ -295,5 +299,6 @@
             </div>
         </form>
     </section>
+    <p class="tagline">The ultimate AI-powered proctoring solution.</p>
 </body>
 </html>
