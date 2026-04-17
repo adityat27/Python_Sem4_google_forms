@@ -116,5 +116,18 @@
         const savedTheme = localStorage.getItem('classlytics_theme') || 'dark';
         if (savedTheme !== 'dark') document.body.classList.add(savedTheme + '-theme');
     </script>
+    <script>
+    const themeToggle = document.getElementById('theme-toggle-btn');
+
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('glass-active');
+        
+        if (document.body.classList.contains('glass-active')) {
+            localStorage.setItem('glassTheme', 'enabled');
+        } else {
+            localStorage.setItem('glassTheme', 'disabled');
+        }
+    });
+</script>
 </body>
 </html>

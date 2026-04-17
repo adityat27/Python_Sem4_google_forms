@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+    <script>
+    if (localStorage.getItem('glassTheme') === 'enabled') {
+        document.body.classList.add('glass-active');
+    }
+</script>
     <title>Classlytics | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">

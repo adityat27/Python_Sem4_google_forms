@@ -35,18 +35,22 @@
         {{ quiz_data | safe }}
     </script>
 
+    <div id="cheatToast" class="fixed top-10 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-full font-bold shadow-2xl transition-all duration-300 translate-y-[-150%] opacity-0 z-50">
+    🚨 Focus Lost! Tab switch recorded.
+</div>
+
     <script>
         let tabSwitches = 0;
         let startTime = null;
         let lastInteractionTime = null; 
         let questionTimes = {};
-        let timeLimitSeconds = {{ time_limit | default(5) }} * 60;
+        let timeLimitSeconds = ({{ time_limit | default(5) | tojson }}) * 60;
         let timerInterval = null;
         let tabSwitchLogs = [];
         const quizData = JSON.parse(document.getElementById('quiz-data').textContent);
         
         let mediaRecorder;
-        // Generate a unique filename for this student's attempt
+        let videoBuffer = [];
         const uniqueVideoName = "student_" + Math.floor(Math.random() * 100000);
 
         async function startProctoring() {
@@ -54,18 +58,17 @@
                 const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                 mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8' });
                 
-                // NEW: Send video chunks to the server continuously!
-                mediaRecorder.ondataavailable = async (e) => {
+               mediaRecorder.ondataavailable = (e) => {
                     if (e.data.size > 0) {
-                        let formData = new FormData();
-                        formData.append("video_chunk", e.data);
-                        formData.append("filename", uniqueVideoName);
-                        await fetch('/api/upload_chunk', { method: 'POST', body: formData });
+                        videoBuffer.push(e.data); 
+                        
+                        if (videoBuffer.length > 10) {
+                            videoBuffer.shift(); 
+                        }
                     }
                 };
-                
-                // NEW: Trigger the data chunking every 5 seconds (5000ms)
-                mediaRecorder.start(5000); 
+             
+                mediaRecorder.start(1000); 
                 
                 startTime = Date.now();
                 document.getElementById('timerDisplay').classList.remove('hidden');
@@ -78,25 +81,39 @@
             }
         }
 
-        document.addEventListener("visibilitychange", () => {
+        document.addEventListener("visibilitychange", async () => {
             if (!startTime) return;
             
             if (document.hidden) {
+                // They left the tab! Log the penalty.
                 tabSwitches++;
+                showToastWarning();
                 
                 let elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
                 let mins = Math.floor(elapsedSeconds / 60);
                 let secs = elapsedSeconds % 60;
                 let displayTime = `${mins}m ${secs.toString().padStart(2, '0')}s`;
-                
-                let now = new Date();
-                let clockTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                let clockTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 
                 tabSwitchLogs.push({
-                    video_time: elapsedSeconds, // Kept as a pure number for the video player
-                    display_time: displayTime,  // For the teacher to read the test time
-                    clock_time: clockTime       // For the teacher to read the real-world time
+                    video_time: elapsedSeconds,
+                    display_time: displayTime,
+                    clock_time: clockTime
                 });
+            } else {
+                
+                if (videoBuffer.length > 0) {
+                    let blob = new Blob(videoBuffer, { type: 'video/webm' });
+                    let formData = new FormData();
+                    formData.append("video_chunk", blob);
+                    
+                    formData.append("filename", uniqueVideoName + "_incident_" + tabSwitches);
+                    
+                    await fetch('/api/upload_chunk', { method: 'POST', body: formData });
+                    
+                   
+                    videoBuffer = []; 
+                }
             }
         });
 
@@ -116,8 +133,10 @@
         });
         document.getElementById('quizArea').innerHTML = html;
 
+        // Attach event listeners to all answer selects
         quizData.forEach((q, i) => {
-            document.getElementById(`ans${i}`).addEventListener('change', () => {
+            const select = document.getElementById(`ans${i}`);
+            select.addEventListener('change', () => {
                 // Only record the time the FIRST time they pick an answer for this question
                 if (!questionTimes[`Q${i+1}`]) { 
                     let timeSpent = Math.floor((Date.now() - lastInteractionTime) / 1000);
@@ -156,7 +175,7 @@
 
             let timeTaken = Math.floor((Date.now() - startTime) / 1000);
             
-            // Cleaned up the duplicates!
+            
             let accuracy = 0;
             let pts = 100 / quizData.length;
             let questionResults = {}; 
@@ -195,6 +214,17 @@
             localStorage.setItem('final_score', JSON.stringify(result));
             window.location.href = '/score';
         }
+
+        function showToastWarning() {
+    const toast = document.getElementById('cheatToast');
+    toast.classList.remove('translate-y-[-150%]', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+    
+    setTimeout(() => {
+        toast.classList.add('translate-y-[-150%]', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+    }, 3000);
+}
     </script>
 </body>
 </html>
