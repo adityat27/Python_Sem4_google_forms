@@ -115,7 +115,7 @@
                                             🕒 {{ log.clock_time }}
                                         </span>
                                         
-                                        <button onclick="playIncident({{ sub.id | tojson }}, {{ log.video_time | tojson }})" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs px-3 py-1.5 rounded border border-red-500/30 transition-colors shadow-lg flex items-center justify-center gap-2 font-bold cursor-pointer w-full">
+                                        <button onclick="playIncident('{{ sub.id }}', {{ loop.index0 }})" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs px-3 py-1.5 rounded border border-red-500/30 transition-colors shadow-lg flex items-center justify-center gap-2 font-bold cursor-pointer w-full">
                                             ▶️ At {{ log.display_time }}
                                         </button>
                                         
@@ -125,9 +125,8 @@
                                 {% endif %}
                             </td>
                             <td class="p-4">
-                                <video id="video-{{ sub.id }}" class="h-20 w-36 rounded-lg border border-white/10 bg-black transition-all duration-300" controls preload="none">
-                                    <source src="/static/videos/{{ sub.video_filename }}" type="video/webm">
-                                </video>
+                                <video id="video-{{ sub.id }}" class="h-20 w-36 rounded-lg border border-white/10 bg-black transition-all duration-300" controls preload="none"></video>
+                                <p id="video-label-{{ sub.id }}" class="text-[10px] text-gray-500 mt-2 text-center">Select incident</p>
                             </td>
                         </tr>
                         {% else %}
@@ -194,27 +193,33 @@
                 document.getElementById('btn-' + tabId).classList.add(...activeClass);
             }
         </script>
-        <script>
-            // --- SMART VIDEO CLIP PLAYER ---
-            function playIncident(subId, totalSeconds) {
-                let video = document.getElementById('video-' + subId);
-                if (!video) return;
+        <<script>
+    const allSubData = {
+        {% for sub in submissions %}
+        "{{ sub.id }}": {{ sub.tab_timestamps | tojson | safe if sub.tab_timestamps else '[]' }},
+        {% endfor %}
+    };
 
-                // Jump the video to 5 seconds BEFORE the tab switch happened
-                video.currentTime = Math.max(0, totalSeconds - 5);
-                video.play();
-                
-                // Highlight the video visually with a red glow
-                video.classList.add('ring-4', 'ring-red-500', 'scale-110');
+    function playIncident(subId, logIndex) {
+        let video = document.getElementById('video-' + subId);
+        let logs = allSubData[subId];
 
-                // Automatically pause it after 10 seconds
-                if (video.clipTimeout) clearTimeout(video.clipTimeout);
-                
-                video.clipTimeout = setTimeout(() => {
-                    video.pause();
-                    video.classList.remove('ring-4', 'ring-red-500', 'scale-110'); 
-                }, 10000); 
-            }
-        </script>
+        if (!video || !logs || !logs[logIndex] || !logs[logIndex].video_data) {
+            alert("No video data recorded for this incident.");
+            return;
+        }
+
+        video.src = logs[logIndex].video_data;
+        video.play();
+        
+        video.classList.add('ring-4', 'ring-red-500', 'scale-110');
+        document.getElementById('video-label-' + subId).innerText = "Playing: " + logs[logIndex].display_time;
+
+        video.onended = () => {
+            video.classList.remove('ring-4', 'ring-red-500', 'scale-110'); 
+            document.getElementById('video-label-' + subId).innerText = "Finished";
+        };
+    }
+</script>
 </body>
 </html>

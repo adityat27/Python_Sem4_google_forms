@@ -112,19 +112,6 @@ def logout():
     session.clear()
     return redirect(url_for('main.login_page'))
 
-# --- API ROUTES ---
-
-@bp.route('/api/upload_chunk', methods=['POST'])
-def upload_chunk():
-    video_chunk = request.files.get('video_chunk')
-    filename = request.form.get('filename', 'unknown') + '.webm'
-    if video_chunk:
-        os.makedirs('app/static/videos', exist_ok=True)
-        filepath = os.path.join('app/static/videos', filename)
-        with open(filepath, 'ab') as f:
-            f.write(video_chunk.read())
-    return jsonify({"status": "success"})
-
 @bp.route('/api/submit', methods=['POST'])
 def submit_assessment():
     data = request.json
