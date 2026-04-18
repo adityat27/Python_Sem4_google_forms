@@ -1,12 +1,12 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
 import json
 import os
+import time
 from .models import db, User, Quiz, Question, Submission
 import google.genai as genai
 
 bp = Blueprint('main', __name__)
 
-# Setup AI
 api_key = os.getenv("API_KEY")
 client = genai.Client(api_key=api_key) if api_key else None
 
@@ -32,21 +32,13 @@ def login_page():
 @bp.route('/dashboard')
 def main_page(): 
     if 'user_id' not in session: return redirect(url_for('main.login_page'))
-    
     recent_quizzes = Quiz.query.order_by(Quiz.id.desc()).limit(5).all()
-    
-    return render_template('main.html', 
-                           quizzes=recent_quizzes, 
-                           role=session.get('role'), 
-                           username=session.get('username'))
+    return render_template('main.html', quizzes=recent_quizzes, role=session.get('role'), username=session.get('username'))
 
 @bp.route('/settings')
 def settings_page(): 
     if 'user_id' not in session: return redirect(url_for('main.login_page'))
-    
-    return render_template('settings.html', 
-                           role=session.get('role'), 
-                           username=session.get('username'))
+    return render_template('settings.html', role=session.get('role'), username=session.get('username'))
 
 @bp.route('/create')
 def create_page(): 
@@ -112,22 +104,20 @@ def logout():
     session.clear()
     return redirect(url_for('main.login_page'))
 
-# --- API ROUTES ---
-
-@bp.route('/api/upload_chunk', methods=['POST'])
-def upload_chunk():
-    video_chunk = request.files.get('video_chunk')
-    filename = request.form.get('filename', 'unknown') + '.webm'
-    if video_chunk:
-        os.makedirs('app/static/videos', exist_ok=True)
-        filepath = os.path.join('app/static/videos', filename)
-        with open(filepath, 'ab') as f:
-            f.write(video_chunk.read())
-    return jsonify({"status": "success"})
-
 @bp.route('/api/submit', methods=['POST'])
 def submit_assessment():
-    data = request.json
+    if 'video' in request.files:
+        video_file = request.files['video']
+        data = json.loads(request.form.get('data', '{}'))
+        
+        os.makedirs('app/static/videos', exist_ok=True)
+        filename = f"{session.get('username')}_{int(time.time())}.webm"
+        filepath = os.path.join('app/static/videos', filename)
+        video_file.save(filepath)
+    else:
+        data = request.json
+        filename = "no_video.webm"
+
     attention_score = calculate_attention_score(data.get('accuracy', 0), data.get('time_taken', 1), data.get('switches', 0))
     
     student = User.query.get(session.get('user_id'))
@@ -138,7 +128,7 @@ def submit_assessment():
         attention_score=attention_score,
         time_taken=data.get('time_taken', 1),
         tab_switches=data.get('switches', 0),
-        video_filename=str(data.get('video_filename', 'no_video')) + '.webm',
+        video_filename=filename,
         question_times=data.get('question_times', {}),
         auto_submitted=data.get('auto_submitted', False),
         question_results=data.get('question_results', {}),

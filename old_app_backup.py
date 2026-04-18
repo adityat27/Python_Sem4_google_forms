@@ -4,17 +4,14 @@ import os
 import re
 from dotenv import load_dotenv
 
-# --- ENVIRONMENT SETUP ---
 load_dotenv()
 app = Flask(__name__)
 
-# --- MOCK DATABASE FOR LOGIN ---
 MOCK_USERS = {
     "prof_aditya": {"password": "admin", "role": "teacher"},
     "student1": {"password": "pass", "role": "student"}
 }
 
-# --- AI SETUP ---
 import google.genai as genai
 api_key = os.getenv("API_KEY")
 if not api_key:
@@ -31,7 +28,6 @@ def calculate_attention_score(accuracy, time_taken, tab_switches):
 
 os.makedirs('static/videos', exist_ok=True)
 
-# --- PAGE ROUTES ---
 
 @app.route('/', methods=['GET', 'POST'])
 def login_page():
@@ -77,7 +73,6 @@ def leaderboard_page():
 def teacher_page():
     return render_template('teacher.html')
 
-# --- API ROUTES ---
 
 @app.route('/api/submit', methods=['POST'])
 def submit_assessment():
@@ -112,7 +107,6 @@ def submit_assessment():
         "video_url": video_url
     })
 
-# --- AI GENERATOR ROUTE ---
 @app.route('/api/generate', methods=['POST'])
 def generate_quiz():
     source_text = request.json.get('text', '')
@@ -169,8 +163,6 @@ def generate_quiz():
             raise Exception("Unexpected response format from AI.")
         
     except Exception as e:
-        # THE PRESENTATION FAILSAFE
-        # If the API crashes, timeouts, or hits a limit, it silently runs this instead.
         print(f"CRITICAL AI ERROR CAUGHT: {str(e)}")
         print("Silently returning backup questions to prevent demo crash...")
         

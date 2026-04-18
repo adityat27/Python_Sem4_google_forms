@@ -46,26 +46,18 @@
         const quizData = JSON.parse(document.getElementById('quiz-data').textContent);
         
         let mediaRecorder;
-        // Generate a unique filename for this student's attempt
-        const uniqueVideoName = "student_" + Math.floor(Math.random() * 100000);
+        let recordedChunks = []; 
 
         async function startProctoring() {
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8' });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
                 
-                // NEW: Send video chunks to the server continuously!
-                mediaRecorder.ondataavailable = async (e) => {
-                    if (e.data.size > 0) {
-                        let formData = new FormData();
-                        formData.append("video_chunk", e.data);
-                        formData.append("filename", uniqueVideoName);
-                        await fetch('/api/upload_chunk', { method: 'POST', body: formData });
-                    }
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) recordedChunks.push(e.data);
                 };
                 
-                // NEW: Trigger the data chunking every 5 seconds (5000ms)
-                mediaRecorder.start(5000); 
+                mediaRecorder.start(); 
                 
                 startTime = Date.now();
                 document.getElementById('timerDisplay').classList.remove('hidden');
@@ -93,9 +85,9 @@
                 let clockTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 
                 tabSwitchLogs.push({
-                    video_time: elapsedSeconds, // Kept as a pure number for the video player
-                    display_time: displayTime,  // For the teacher to read the test time
-                    clock_time: clockTime       // For the teacher to read the real-world time
+                    video_time: elapsedSeconds,
+                    display_time: displayTime, 
+                    clock_time: clockTime      
                 });
             }
         });
@@ -118,11 +110,9 @@
 
         quizData.forEach((q, i) => {
             document.getElementById(`ans${i}`).addEventListener('change', () => {
-                // Only record the time the FIRST time they pick an answer for this question
                 if (!questionTimes[`Q${i+1}`]) { 
                     let timeSpent = Math.floor((Date.now() - lastInteractionTime) / 1000);
                     questionTimes[`Q${i+1}`] = timeSpent;
-                    // Reset the timer for the next question they answer
                     lastInteractionTime = Date.now(); 
                 }
             });
@@ -133,16 +123,14 @@
             let remaining = timeLimitSeconds - elapsed;
 
             if (remaining <= 0) {
-                // Time is up! Stop the clock and force submit
                 clearInterval(timerInterval);
                 document.getElementById('timeRemaining').innerText = "00:00";
-                submitAssessment(true); // 'true' means it was forced
+                submitAssessment(true); 
             } else {
                 let m = Math.floor(remaining / 60);
                 let s = remaining % 60;
                 document.getElementById('timeRemaining').innerText = `${m}:${s.toString().padStart(2, '0')}`;
                 
-                // Turn red in the final 60 seconds
                 if (remaining <= 60) {
                     document.getElementById('timerDisplay').classList.add('text-red-500', 'border-red-500/50');
                 }
@@ -150,50 +138,47 @@
         }
 
        async function submitAssessment(isAutoSubmit = false) {
-            clearInterval(timerInterval); // Stop timer if they submit early
-            
-            document.querySelector('button[onclick="submitAssessment()"]').innerText = "Finalizing Score...";
+            clearInterval(timerInterval); 
+            document.querySelector('button[onclick="submitAssessment()"]').innerText = "Uploading Video & Score...";
 
-            let timeTaken = Math.floor((Date.now() - startTime) / 1000);
-            
-            // Cleaned up the duplicates!
-            let accuracy = 0;
-            let pts = 100 / quizData.length;
-            let questionResults = {}; 
-
-            quizData.forEach((q, i) => {
-                let studentAnswer = document.getElementById(`ans${i}`).value;
-                let isCorrect = (studentAnswer === q.correct_option);
-                
-                if (isCorrect) accuracy += pts;
-                
-                // Save true/false for this specific question
-                questionResults[`Q${i+1}`] = isCorrect; 
-            });
-            // Removed the extra stray }; that was here
-
-            // Stop recording
             mediaRecorder.stop();
 
-            // Just send the score data, video was already uploaded in the background
-            const res = await fetch('/api/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            mediaRecorder.onstop = async () => {
+                const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+                let timeTaken = Math.floor((Date.now() - startTime) / 1000);
+                
+                let accuracy = 0;
+                let pts = 100 / quizData.length;
+                let questionResults = {}; 
+
+                quizData.forEach((q, i) => {
+                    let studentAnswer = document.getElementById(`ans${i}`).value;
+                    let isCorrect = (studentAnswer === q.correct_option);
+                    if (isCorrect) accuracy += pts;
+                    questionResults[`Q${i+1}`] = isCorrect; 
+                });
+
+                const formData = new FormData();
+                formData.append('video', videoBlob, `recording_${Date.now()}.webm`);
+                formData.append('data', JSON.stringify({
                     switches: tabSwitches, 
                     time_taken: timeTaken, 
                     accuracy: accuracy,
-                    video_filename: uniqueVideoName,
                     question_times: questionTimes,
                     auto_submitted: isAutoSubmit,
                     question_results: questionResults,
                     switch_logs: tabSwitchLogs
-                })
-            });
-            
-            const result = await res.json();
-            localStorage.setItem('final_score', JSON.stringify(result));
-            window.location.href = '/score';
+                }));
+
+                const res = await fetch('/api/submit', {
+                    method: 'POST',
+                    body: formData 
+                });
+                
+                const result = await res.json();
+                localStorage.setItem('final_score', JSON.stringify(result));
+                window.location.href = '/score';
+            };
         }
     </script>
 </body>

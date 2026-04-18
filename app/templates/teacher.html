@@ -3,10 +3,9 @@
 <head>
     <title>Classlytics | Teacher Panel</title>
     <script>
-        // Check theme before page loads to prevent flickering
         const theme = localStorage.getItem('classlytics_theme');
         if (theme && theme !== 'dark') {
-            document.documentElement.classList.add('theme-ready'); // Prevent flash
+            document.documentElement.classList.add('theme-ready'); 
             window.addEventListener('DOMContentLoaded', () => {
                 document.body.classList.add(theme + '-theme');
             });
@@ -23,6 +22,31 @@
 
        <div class="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-8 shadow-2xl overflow-hidden min-h-[500px]">
             
+        {% if alerts %}
+        <div class="bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 backdrop-blur-xl rounded-2xl p-6 mb-8 shadow-lg">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-red-400 mb-1 flex items-center gap-2">
+                        <span class="text-2xl">🚨</span> AI Insights: Class Struggle Areas
+                    </h2>
+                    <p class="text-gray-400 text-sm mb-4">Students are frequently failing the following questions. Consider reviewing these concepts in the next lecture.</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for alert in alerts %}
+                <div class="bg-black/20 border border-red-500/10 p-4 rounded-xl hover:bg-black/30 transition-colors">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Question</span>
+                        <span class="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-1 rounded-md">{{ alert.success_rate }}% Pass</span>
+                    </div>
+                    <p class="font-semibold text-gray-200 text-sm truncate" title="{{ alert.question }}">{{ alert.question }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
             <div class="flex gap-4 mb-8 border-b border-white/10 pb-4">
                 <button onclick="switchTab('submissions')" id="btn-submissions" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20">
                     Recent Submissions
@@ -55,23 +79,6 @@
                             </td>
                             <td class="p-4">
                                 <div class="flex flex-col gap-1">
-                                    {% if alerts %}
-        <div class="bg-red-500/10 border-l-4 border-red-500 rounded-r-2xl p-6 mb-10 shadow-xl backdrop-blur-md">
-            <h2 class="text-xl font-bold text-red-400 mb-2 flex items-center gap-2">
-                <span>⚠️</span> Needs Attention: Class Performance
-            </h2>
-            <p class="text-gray-300 text-sm mb-4">The AI has detected that the class is struggling with specific topics. Consider reviewing these questions:</p>
-            
-            <div class="flex flex-wrap gap-4">
-                {% for alert in alerts %}
-                <div class="bg-black/40 border border-red-500/30 px-5 py-3 rounded-xl">
-                    <p class="font-bold text-white text-lg">{{ alert.question }}</p>
-                    <p class="text-red-400 font-bold text-sm">Pass rate: {{ alert.success_rate }}%</p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
                                     {% if sub.question_times %}
                                         {% for q, time in sub.question_times.items() %}
                                             <div class="text-xs bg-black/20 px-2 py-1 rounded border border-white/5 flex justify-between items-center w-20">
@@ -101,24 +108,20 @@
                                 <div class="flex flex-col gap-2 mt-3 max-w-[200px]">
                                     {% for log in sub.tab_timestamps %}
                                     <div class="flex flex-col gap-1 bg-black/20 p-2 rounded-lg border border-white/5">
-                                        
                                         <span class="text-[10px] text-gray-500 font-bold tracking-wider uppercase">
                                             🕒 {{ log.clock_time }}
                                         </span>
-                                        
-                                        <button onclick="playIncident({{ sub.id }}, {{ log.video_time }})" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs px-3 py-1.5 rounded border border-red-500/30 transition-colors shadow-lg flex items-center justify-center gap-2 font-bold cursor-pointer w-full">
+                                        <button onclick="playIncident('{{ sub.id }}', {{ loop.index0 }})" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 text-xs px-3 py-1.5 rounded border border-red-500/30 transition-colors shadow-lg flex items-center justify-center gap-2 font-bold cursor-pointer w-full">
                                             ▶️ At {{ log.display_time }}
                                         </button>
-                                        
                                     </div>
                                     {% endfor %}
                                 </div>
                                 {% endif %}
                             </td>
                             <td class="p-4">
-                                <video id="video-{{ sub.id }}" class="h-20 w-36 rounded-lg border border-white/10 bg-black transition-all duration-300" controls preload="none">
-                                    <source src="/static/videos/{{ sub.video_filename }}" type="video/webm">
-                                </video>
+                                <video id="video-{{ sub.id }}" src="/static/videos/{{ sub.video_filename }}" class="h-20 w-36 rounded-lg border border-white/10 bg-black transition-all duration-300" controls preload="metadata"></video>
+                                <p id="video-label-{{ sub.id }}" class="text-[10px] text-gray-500 mt-2 text-center">Select incident</p>
                             </td>
                         </tr>
                         {% else %}
@@ -166,11 +169,9 @@
 
         <script>
             function switchTab(tabId) {
-                // Hide both tabs
                 document.getElementById('tab-submissions').classList.replace('block', 'hidden');
                 document.getElementById('tab-directory').classList.replace('block', 'hidden');
                 
-                // Reset both buttons to inactive style
                 const inactiveClass = "bg-black/30 hover:bg-black/50 text-gray-400 px-6 py-2 rounded-xl font-bold transition-all".split(" ");
                 const activeClass = "bg-blue-600 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20".split(" ");
                 
@@ -179,32 +180,38 @@
                 document.getElementById('btn-directory').classList.remove(...activeClass);
                 document.getElementById('btn-directory').classList.add(...inactiveClass);
 
-                // Show selected tab and highlight selected button
                 document.getElementById('tab-' + tabId).classList.replace('hidden', 'block');
                 document.getElementById('btn-' + tabId).classList.remove(...inactiveClass);
                 document.getElementById('btn-' + tabId).classList.add(...activeClass);
             }
         </script>
+        
         <script>
-            // --- SMART VIDEO CLIP PLAYER ---
-            function playIncident(subId, totalSeconds) {
-                let video = document.getElementById('video-' + subId);
-                if (!video) return;
+            const allSubData = {
+                {% for sub in submissions %}
+                "{{ sub.id }}": {{ sub.tab_timestamps | tojson | safe if sub.tab_timestamps else '[]' }},
+                {% endfor %}
+            };
 
-                // Jump the video to 5 seconds BEFORE the tab switch happened
-                video.currentTime = Math.max(0, totalSeconds - 5);
+            function playIncident(subId, logIndex) {
+                let video = document.getElementById('video-' + subId);
+                let logs = allSubData[subId];
+
+                if (!video || !logs || !logs[logIndex]) {
+                    return;
+                }
+
+                let jumpTime = Math.max(0, logs[logIndex].video_time - 3); 
+                video.currentTime = jumpTime;
                 video.play();
                 
-                // Highlight the video visually with a red glow
                 video.classList.add('ring-4', 'ring-red-500', 'scale-110');
+                document.getElementById('video-label-' + subId).innerText = "Playing incident at: " + logs[logIndex].display_time;
 
-                // Automatically pause it after 10 seconds
-                if (video.clipTimeout) clearTimeout(video.clipTimeout);
-                
-                video.clipTimeout = setTimeout(() => {
-                    video.pause();
+                video.onended = () => {
                     video.classList.remove('ring-4', 'ring-red-500', 'scale-110'); 
-                }, 10000); 
+                    document.getElementById('video-label-' + subId).innerText = "Finished";
+                };
             }
         </script>
 </body>
