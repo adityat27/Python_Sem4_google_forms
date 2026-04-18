@@ -35,50 +35,30 @@
         {{ quiz_data | safe }}
     </script>
 
-    <div id="cheatToast" class="fixed top-10 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-full font-bold shadow-2xl transition-all duration-300 translate-y-[-150%] opacity-0 z-50">
-    🚨 Focus Lost! Tab switch recorded.
-</div>
-
     <script>
         let tabSwitches = 0;
         let startTime = null;
         let lastInteractionTime = null; 
         let questionTimes = {};
-        let timeLimitSeconds = ({{ time_limit | default(5) | tojson }}) * 60;
+        let timeLimitSeconds = {{ time_limit | default(5) }} * 60;
         let timerInterval = null;
         let tabSwitchLogs = [];
         const quizData = JSON.parse(document.getElementById('quiz-data').textContent);
         
         let mediaRecorder;
-        let videoBuffer = [];
-        let headerChunk = null; 
-        const uniqueVideoName = "student_" + Math.floor(Math.random() * 100000);
+        let recordedChunks = []; // This will securely hold the video in the browser
 
         async function startProctoring() {
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                mediaRecorder = new MediaRecorder(stream, { 
-                    mimeType: 'video/webm; codecs=vp8',
-                    videoBitsPerSecond: 100000 
-                });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
                 
-               mediaRecorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) {
-                   
-                        if (!headerChunk) {
-                            headerChunk = e.data;
-                        } else {
-                            videoBuffer.push(e.data); 
-                            
-                    
-                            if (videoBuffer.length > 10) {
-                                videoBuffer.shift(); 
-                            }
-                        }
-                    }
+                // Save the video locally instead of uploading continuously
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) recordedChunks.push(e.data);
                 };
-             
-                mediaRecorder.start(1000); 
+                
+                mediaRecorder.start(); // Start one continuous recording
                 
                 startTime = Date.now();
                 document.getElementById('timerDisplay').classList.remove('hidden');
@@ -91,39 +71,27 @@
             }
         }
 
-      document.addEventListener("visibilitychange", async () => {
-    if (!startTime) return;
-    
-    if (document.hidden) {
-        tabSwitches++;
-        showToastWarning();
-        
-        let elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-        let mins = Math.floor(elapsedSeconds / 60);
-        let secs = elapsedSeconds % 60;
-        let displayTime = `${mins}m ${secs.toString().padStart(2, '0')}s`;
-        let clockTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        
-        let logEntry = {
-            video_time: elapsedSeconds,
-            display_time: displayTime,
-            clock_time: clockTime,
-            video_data: null
-        };
-        
-        if (headerChunk && videoBuffer.length > 0) {
-            let snapshotBuffer = [...videoBuffer]; 
-            let blob = new Blob([headerChunk, ...snapshotBuffer], { type: 'video/webm' });
-            let reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = function() {
-                logEntry.video_data = reader.result;
-            };
-        }
-        
-        tabSwitchLogs.push(logEntry);
-    }
-});
+        document.addEventListener("visibilitychange", () => {
+            if (!startTime) return;
+            
+            if (document.hidden) {
+                tabSwitches++;
+                
+                let elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                let mins = Math.floor(elapsedSeconds / 60);
+                let secs = elapsedSeconds % 60;
+                let displayTime = `${mins}m ${secs.toString().padStart(2, '0')}s`;
+                
+                let now = new Date();
+                let clockTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                tabSwitchLogs.push({
+                    video_time: elapsedSeconds,
+                    display_time: displayTime, 
+                    clock_time: clockTime      
+                });
+            }
+        });
 
         let html = "";
         quizData.forEach((q, i) => {
@@ -141,15 +109,11 @@
         });
         document.getElementById('quizArea').innerHTML = html;
 
-        // Attach event listeners to all answer selects
         quizData.forEach((q, i) => {
-            const select = document.getElementById(`ans${i}`);
-            select.addEventListener('change', () => {
-                // Only record the time the FIRST time they pick an answer for this question
+            document.getElementById(`ans${i}`).addEventListener('change', () => {
                 if (!questionTimes[`Q${i+1}`]) { 
                     let timeSpent = Math.floor((Date.now() - lastInteractionTime) / 1000);
                     questionTimes[`Q${i+1}`] = timeSpent;
-                    // Reset the timer for the next question they answer
                     lastInteractionTime = Date.now(); 
                 }
             });
@@ -160,16 +124,14 @@
             let remaining = timeLimitSeconds - elapsed;
 
             if (remaining <= 0) {
-                // Time is up! Stop the clock and force submit
                 clearInterval(timerInterval);
                 document.getElementById('timeRemaining').innerText = "00:00";
-                submitAssessment(true); // 'true' means it was forced
+                submitAssessment(true); 
             } else {
                 let m = Math.floor(remaining / 60);
                 let s = remaining % 60;
                 document.getElementById('timeRemaining').innerText = `${m}:${s.toString().padStart(2, '0')}`;
                 
-                // Turn red in the final 60 seconds
                 if (remaining <= 60) {
                     document.getElementById('timerDisplay').classList.add('text-red-500', 'border-red-500/50');
                 }
@@ -177,60 +139,50 @@
         }
 
        async function submitAssessment(isAutoSubmit = false) {
-            clearInterval(timerInterval); // Stop timer if they submit early
-            
-            document.querySelector('button[onclick="submitAssessment()"]').innerText = "Finalizing Score...";
+            clearInterval(timerInterval); 
+            document.querySelector('button[onclick="submitAssessment()"]').innerText = "Uploading Video & Score...";
 
-            let timeTaken = Math.floor((Date.now() - startTime) / 1000);
-            
-            
-            let accuracy = 0;
-            let pts = 100 / quizData.length;
-            let questionResults = {}; 
-
-            quizData.forEach((q, i) => {
-                let studentAnswer = document.getElementById(`ans${i}`).value;
-                let isCorrect = (studentAnswer === q.correct_option);
-                
-                if (isCorrect) accuracy += pts;
-                
-                // Save true/false for this specific question
-                questionResults[`Q${i+1}`] = isCorrect; 
-            });
-
-            // Stop recording
+            // 1. Stop the video recording
             mediaRecorder.stop();
 
-            // Just send the score data, video was already uploaded in the background
-            const res = await fetch('/api/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            // 2. Wait for it to safely bundle the video file, then send it to Flask
+            mediaRecorder.onstop = async () => {
+                const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+                let timeTaken = Math.floor((Date.now() - startTime) / 1000);
+                
+                let accuracy = 0;
+                let pts = 100 / quizData.length;
+                let questionResults = {}; 
+
+                quizData.forEach((q, i) => {
+                    let studentAnswer = document.getElementById(`ans${i}`).value;
+                    let isCorrect = (studentAnswer === q.correct_option);
+                    if (isCorrect) accuracy += pts;
+                    questionResults[`Q${i+1}`] = isCorrect; 
+                });
+
+                // Package the video file AND the JSON scores together
+                const formData = new FormData();
+                formData.append('video', videoBlob, `recording_${Date.now()}.webm`);
+                formData.append('data', JSON.stringify({
                     switches: tabSwitches, 
                     time_taken: timeTaken, 
                     accuracy: accuracy,
-                    video_filename: uniqueVideoName,
                     question_times: questionTimes,
                     auto_submitted: isAutoSubmit,
                     question_results: questionResults,
                     switch_logs: tabSwitchLogs
-                })
-            });
-            
-            const result = await res.json();
-            localStorage.setItem('final_score', JSON.stringify(result));
-            window.location.href = '/score';
-        }
+                }));
 
-        function showToastWarning() {
-            const toast = document.getElementById('cheatToast');
-            toast.classList.remove('translate-y-[-150%]', 'opacity-0');
-            toast.classList.add('translate-y-0', 'opacity-100');
-            
-            setTimeout(() => {
-                toast.classList.add('translate-y-[-150%]', 'opacity-0');
-                toast.classList.remove('translate-y-0', 'opacity-100');
-            }, 3000);
+                const res = await fetch('/api/submit', {
+                    method: 'POST',
+                    body: formData // Send the bundle to Flask
+                });
+                
+                const result = await res.json();
+                localStorage.setItem('final_score', JSON.stringify(result));
+                window.location.href = '/score';
+            };
         }
     </script>
 </body>
