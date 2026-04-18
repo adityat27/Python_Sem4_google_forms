@@ -200,26 +200,33 @@
         {% endfor %}
     };
 
-    function playIncident(subId, logIndex) {
-        let video = document.getElementById('video-' + subId);
-        let logs = allSubData[subId];
+   function playIncident(subId, logIndex) {
+    let video = document.getElementById('video-' + subId);
+    let logs = allSubData[subId];
 
-        if (!video || !logs || !logs[logIndex] || !logs[logIndex].video_data) {
-            alert("No video data recorded for this incident.");
-            return;
-        }
-
-        video.src = logs[logIndex].video_data;
-        video.play();
-        
-        video.classList.add('ring-4', 'ring-red-500', 'scale-110');
-        document.getElementById('video-label-' + subId).innerText = "Playing: " + logs[logIndex].display_time;
-
-        video.onended = () => {
-            video.classList.remove('ring-4', 'ring-red-500', 'scale-110'); 
-            document.getElementById('video-label-' + subId).innerText = "Finished";
-        };
+    if (!video || !logs || !logs[logIndex] || !logs[logIndex].video_data) {
+        alert("No video data recorded for this incident. The student may have submitted the quiz too quickly after switching tabs.");
+        return;
     }
+
+    video.src = logs[logIndex].video_data;
+    
+    // FIX: WebM files with missing middle chunks will freeze in "dead time"
+    // We force the video player to skip the missing time and jump straight to the incident.
+    video.onloadedmetadata = () => {
+        let jumpTime = Math.max(0, logs[logIndex].video_time - 10);
+        video.currentTime = jumpTime;
+        video.play();
+    };
+    
+    video.classList.add('ring-4', 'ring-red-500', 'scale-110');
+    document.getElementById('video-label-' + subId).innerText = "Playing: " + logs[logIndex].display_time;
+
+    video.onended = () => {
+        video.classList.remove('ring-4', 'ring-red-500', 'scale-110'); 
+        document.getElementById('video-label-' + subId).innerText = "Finished";
+    };
+}
 </script>
 </body>
 </html>

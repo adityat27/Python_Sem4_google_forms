@@ -51,22 +51,29 @@
         
         let mediaRecorder;
         let videoBuffer = [];
+        let headerChunk = null; 
         const uniqueVideoName = "student_" + Math.floor(Math.random() * 100000);
 
         async function startProctoring() {
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                 mediaRecorder = new MediaRecorder(stream, { 
-    mimeType: 'video/webm; codecs=vp8',
-    videoBitsPerSecond: 100000 
-});
+                    mimeType: 'video/webm; codecs=vp8',
+                    videoBitsPerSecond: 100000 
+                });
                 
                mediaRecorder.ondataavailable = (e) => {
                     if (e.data.size > 0) {
-                        videoBuffer.push(e.data); 
-                        
-                        if (videoBuffer.length > 10) {
-                            videoBuffer.shift(); 
+                   
+                        if (!headerChunk) {
+                            headerChunk = e.data;
+                        } else {
+                            videoBuffer.push(e.data); 
+                            
+                    
+                            if (videoBuffer.length > 10) {
+                                videoBuffer.shift(); 
+                            }
                         }
                     }
                 };
@@ -84,11 +91,10 @@
             }
         }
 
-       document.addEventListener("visibilitychange", async () => {
+      document.addEventListener("visibilitychange", async () => {
     if (!startTime) return;
     
     if (document.hidden) {
-        
         tabSwitches++;
         showToastWarning();
         
@@ -104,22 +110,18 @@
             clock_time: clockTime,
             video_data: null
         };
+        
+        if (headerChunk && videoBuffer.length > 0) {
+            let snapshotBuffer = [...videoBuffer]; 
+            let blob = new Blob([headerChunk, ...snapshotBuffer], { type: 'video/webm' });
+            let reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = function() {
+                logEntry.video_data = reader.result;
+            };
+        }
+        
         tabSwitchLogs.push(logEntry);
-
-        setTimeout(() => {
-            if (videoBuffer.length > 0) {
-                
-                let blob = new Blob(videoBuffer, { type: 'video/webm' });
-                let reader = new FileReader();
-                reader.readAsDataURL(blob);
-                reader.onloadend = function() {
-                    logEntry.video_data = reader.result;
-                }
-            }
-        }, 2000);
-
-    } else {
-    
     }
 });
 
@@ -195,7 +197,6 @@
                 // Save true/false for this specific question
                 questionResults[`Q${i+1}`] = isCorrect; 
             });
-            // Removed the extra stray }; that was here
 
             // Stop recording
             mediaRecorder.stop();
@@ -222,15 +223,15 @@
         }
 
         function showToastWarning() {
-    const toast = document.getElementById('cheatToast');
-    toast.classList.remove('translate-y-[-150%]', 'opacity-0');
-    toast.classList.add('translate-y-0', 'opacity-100');
-    
-    setTimeout(() => {
-        toast.classList.add('translate-y-[-150%]', 'opacity-0');
-        toast.classList.remove('translate-y-0', 'opacity-100');
-    }, 3000);
-}
+            const toast = document.getElementById('cheatToast');
+            toast.classList.remove('translate-y-[-150%]', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-150%]', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
     </script>
 </body>
 </html>
