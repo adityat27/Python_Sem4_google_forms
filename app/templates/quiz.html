@@ -84,10 +84,11 @@
             }
         }
 
-        document.addEventListener("visibilitychange", async () => {
+       document.addEventListener("visibilitychange", async () => {
     if (!startTime) return;
     
     if (document.hidden) {
+        
         tabSwitches++;
         showToastWarning();
         
@@ -97,28 +98,28 @@
         let displayTime = `${mins}m ${secs.toString().padStart(2, '0')}s`;
         let clockTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         
-        tabSwitchLogs.push({
+        let logEntry = {
             video_time: elapsedSeconds,
             display_time: displayTime,
             clock_time: clockTime,
-            video_data: null // Will hold our text-based video
-        });
-    } else {
-        if (videoBuffer.length > 0) {
-            let blob = new Blob(videoBuffer, { type: 'video/webm' });
-            
-            // Convert video blob to a Base64 text string
-            let reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = function() {
-                let base64data = reader.result;
-                // Attach the video to the incident log
-                if (tabSwitchLogs.length > 0) {
-                    tabSwitchLogs[tabSwitchLogs.length - 1].video_data = base64data;
+            video_data: null
+        };
+        tabSwitchLogs.push(logEntry);
+
+        setTimeout(() => {
+            if (videoBuffer.length > 0) {
+                
+                let blob = new Blob(videoBuffer, { type: 'video/webm' });
+                let reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = function() {
+                    logEntry.video_data = reader.result;
                 }
             }
-            videoBuffer = []; 
-        }
+        }, 2000);
+
+    } else {
+    
     }
 });
 

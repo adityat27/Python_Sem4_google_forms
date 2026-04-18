@@ -38,15 +38,7 @@
             document.getElementById('scoreDisplay').innerText = data.attention_score;
             document.getElementById('timeDisplay').innerText = data.time_taken + 's';
             document.getElementById('tabDisplay').innerText = data.switches;
-        }
-
-        const data = JSON.parse(localStorage.getItem('final_score'));
-        if(data) {
-            document.getElementById('scoreDisplay').innerText = data.attention_score;
-            document.getElementById('timeDisplay').innerText = data.time_taken + 's';
-            document.getElementById('tabDisplay').innerText = data.switches;
             
-            // Fire confetti if score is great
             if (data.attention_score >= 85) {
                 var duration = 3 * 1000;
                 var animationEnd = Date.now() + duration;
@@ -60,7 +52,6 @@
                 }, 250);
             }
         }
-        
     </script>
     
 </body>
