@@ -46,19 +46,18 @@
         const quizData = JSON.parse(document.getElementById('quiz-data').textContent);
         
         let mediaRecorder;
-        let recordedChunks = []; // This will securely hold the video in the browser
+        let recordedChunks = []; 
 
         async function startProctoring() {
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                 mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
                 
-                // Save the video locally instead of uploading continuously
                 mediaRecorder.ondataavailable = (e) => {
                     if (e.data.size > 0) recordedChunks.push(e.data);
                 };
                 
-                mediaRecorder.start(); // Start one continuous recording
+                mediaRecorder.start(); 
                 
                 startTime = Date.now();
                 document.getElementById('timerDisplay').classList.remove('hidden');
@@ -142,10 +141,8 @@
             clearInterval(timerInterval); 
             document.querySelector('button[onclick="submitAssessment()"]').innerText = "Uploading Video & Score...";
 
-            // 1. Stop the video recording
             mediaRecorder.stop();
 
-            // 2. Wait for it to safely bundle the video file, then send it to Flask
             mediaRecorder.onstop = async () => {
                 const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
                 let timeTaken = Math.floor((Date.now() - startTime) / 1000);
@@ -161,7 +158,6 @@
                     questionResults[`Q${i+1}`] = isCorrect; 
                 });
 
-                // Package the video file AND the JSON scores together
                 const formData = new FormData();
                 formData.append('video', videoBlob, `recording_${Date.now()}.webm`);
                 formData.append('data', JSON.stringify({
@@ -176,7 +172,7 @@
 
                 const res = await fetch('/api/submit', {
                     method: 'POST',
-                    body: formData // Send the bundle to Flask
+                    body: formData 
                 });
                 
                 const result = await res.json();

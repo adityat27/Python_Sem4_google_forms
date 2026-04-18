@@ -32,10 +32,9 @@
     <script>
         let questionCount = 0;
 
-        // Add a blank question block to the screen
         function addQuestion() {
             questionCount++;
-            const qIndex = questionCount; // Store current ID
+            const qIndex = questionCount; 
             
             const html = `
             <div id="qBlock_${qIndex}" class="backdrop-blur-md bg-[#27272a]/80 border border-white/5 rounded-2xl p-8 shadow-xl relative group">
@@ -81,21 +80,16 @@
             document.getElementById('questionsContainer').insertAdjacentHTML('beforeend', html);
         }
 
-        // Add the first question automatically when the page loads
         window.onload = addQuestion;
 
-        // Gather all inputs and send to backend
         async function saveManualQuiz() {
             const title = document.getElementById('quizTitle').value || "Untitled Quiz";
             let finalQuestions = [];
             
-            // Loop through all elements that might be questions (up to our current count)
             for (let i = 1; i <= questionCount; i++) {
-                // Check if this block still exists (wasn't removed)
                 if (document.getElementById(`qBlock_${i}`)) {
                     const qText = document.getElementById(`qText_${i}`).value;
                     
-                    // Don't save empty questions
                     if(qText.trim() === "") continue; 
 
                     finalQuestions.push({
@@ -114,13 +108,12 @@
                 return;
             }
 
-            // Send to database
             const res = await fetch('/api/save_quiz', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     title: title, 
-                    is_ai: false, // Flag as manual
+                    is_ai: false, 
                     questions: finalQuestions 
                 })
             });

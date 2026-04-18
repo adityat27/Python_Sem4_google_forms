@@ -201,8 +201,7 @@
                     return;
                 }
 
-                // FIX: Instead of loading base64 data, just jump the existing video to the timestamp
-                let jumpTime = Math.max(0, logs[logIndex].video_time - 3); // Start 3 seconds before the switch
+                let jumpTime = Math.max(0, logs[logIndex].video_time - 3); 
                 video.currentTime = jumpTime;
                 video.play();
                 

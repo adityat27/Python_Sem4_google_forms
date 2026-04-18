@@ -4,7 +4,6 @@
     <title>Classlytics | Settings</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom minimal scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1e1e20; }
         ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
@@ -103,16 +102,13 @@
     </main>
     <script>
         function setTheme(themeName) {
-            // Save to browser storage
             localStorage.setItem('classlytics_theme', themeName);
-            // Apply it immediately
             document.body.className = "bg-[#18181b] flex h-screen overflow-hidden text-gray-100 font-sans selection:bg-blue-500/30"; 
             if (themeName !== 'dark') {
                 document.body.classList.add(themeName + '-theme');
             }
         }
 
-        // Apply theme on page load
         const savedTheme = localStorage.getItem('classlytics_theme') || 'dark';
         if (savedTheme !== 'dark') document.body.classList.add(savedTheme + '-theme');
     </script>

@@ -10,10 +10,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script>
-        // Check theme before page loads to prevent flickering
         const theme = localStorage.getItem('classlytics_theme');
         if (theme && theme !== 'dark') {
-            document.documentElement.classList.add('theme-ready'); // Prevent flash
+            document.documentElement.classList.add('theme-ready'); 
             window.addEventListener('DOMContentLoaded', () => {
                 document.body.classList.add(theme + '-theme');
             });

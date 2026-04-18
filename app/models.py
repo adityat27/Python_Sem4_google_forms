@@ -23,7 +23,7 @@ class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     is_ai_generated = db.Column(db.Boolean, default=False)
-    time_limit = db.Column(db.Integer, default=5) # 5 minutes default
+    time_limit = db.Column(db.Integer, default=5)
     questions = db.relationship('Question', backref='quiz', lazy=True)
 
 class Question(db.Model):

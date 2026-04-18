@@ -7,7 +7,6 @@ import google.genai as genai
 
 bp = Blueprint('main', __name__)
 
-# Setup AI
 api_key = os.getenv("API_KEY")
 client = genai.Client(api_key=api_key) if api_key else None
 
@@ -105,16 +104,12 @@ def logout():
     session.clear()
     return redirect(url_for('main.login_page'))
 
-# --- API ROUTES ---
-
 @bp.route('/api/submit', methods=['POST'])
 def submit_assessment():
-    # Receive the bundled video and JSON data
     if 'video' in request.files:
         video_file = request.files['video']
         data = json.loads(request.form.get('data', '{}'))
         
-        # Save video file correctly
         os.makedirs('app/static/videos', exist_ok=True)
         filename = f"{session.get('username')}_{int(time.time())}.webm"
         filepath = os.path.join('app/static/videos', filename)

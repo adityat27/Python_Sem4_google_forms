@@ -20,13 +20,11 @@
         body {
             min-height: 100vh;
             overflow: hidden;
-            /* Sleek, deep midnight blue/black background */
-            background-color: #020617; /* Very dark slate */
+            background-color: #020617; 
             color: #ffffff;
             position: relative;
         }
 
-        /* --- AMBIENT GLOWING SPOTS (Dark Theme) --- */
         .bg-shapes {
             position: absolute;
             top: 0;
@@ -41,7 +39,7 @@
         .shape {
             position: absolute;
             border-radius: 50%;
-            filter: blur(100px); /* Deep blur for that smooth 'spot' look */
+            filter: blur(100px); 
             opacity: 0.4;
             transition: transform 0.3s ease-out;
             animation: float 20s infinite alternate ease-in-out;
@@ -52,7 +50,7 @@
             height: 50vw;
             max-width: 600px;
             max-height: 600px;
-            background: #1d4ed8; /* Royal Blue */
+            background: #1d4ed8; 
             top: -15%;
             left: -10%;
             animation-duration: 25s;
@@ -63,7 +61,7 @@
             height: 40vw;
             max-width: 500px;
             max-height: 500px;
-            background: #0ea5e9; /* Cyan/Light Blue */
+            background: #0ea5e9; 
             bottom: -20%;
             right: -5%;
             animation-delay: -5s;
@@ -74,7 +72,7 @@
             height: 35vw;
             max-width: 400px;
             max-height: 400px;
-            background: #312e81; /* Deep Indigo */
+            background: #312e81; 
             top: 30%;
             left: 30%;
             animation-duration: 28s;
@@ -88,7 +86,6 @@
             100% { transform: translate(0, 0) scale(1); }
         }
 
-        /* --- LAYOUT --- */
         .layout-container {
             display: flex;
             width: 100vw;
@@ -97,7 +94,6 @@
             z-index: 10;
         }
 
-        /* LOGIN ON THE LEFT */
         .left-panel {
             flex: 1;
             display: flex;
@@ -106,7 +102,6 @@
             padding: 2rem;
         }
 
-        /* BRANDING ON THE RIGHT */
         .right-panel {
             flex: 1.2;
             display: flex;
@@ -116,11 +111,9 @@
             position: relative;
         }
 
-        /* --- LEFT PANEL: LOGIN FORM --- */
         section {
             width: 100%;
             max-width: 420px;
-            /* Minimalist Dark Glassmorphism */
             background-color: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 20px;
@@ -167,7 +160,7 @@
         select:focus ~ label, select:valid ~ label {
             top: -12px;
             font-size: 0.8rem;
-            color: #3b82f6; /* Blue highlight on focus */
+            color: #3b82f6; 
         }
 
         .inputbox input, .inputbox select {
@@ -272,7 +265,6 @@
             color: #3b82f6;
         }
 
-        /* --- RIGHT PANEL: BRANDING --- */
         .cursive-svg {
             width: 90%;
             max-width: 600px;
@@ -315,7 +307,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Responsive */
         @media (max-width: 850px) {
             .layout-container {
                 flex-direction: column;
@@ -333,7 +324,6 @@
             .cursive-svg { height: 120px; }
         }
         
-        /* Flask Flash Message Styling */
         .flash-message {
             background-color: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.3);
